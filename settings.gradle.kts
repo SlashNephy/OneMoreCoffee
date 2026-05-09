@@ -30,16 +30,3 @@ include(
     ":feature:settings",
     ":feature:import",
 )
-
-listOf(
-    ":app",
-    ":core:common",
-    ":core:domain",
-    ":core:data",
-    ":core:ui",
-    ":feature:map",
-    ":feature:list",
-    ":feature:stats",
-    ":feature:settings",
-    ":feature:import",
-).forEach { project(it).projectDir.mkdirs() }
