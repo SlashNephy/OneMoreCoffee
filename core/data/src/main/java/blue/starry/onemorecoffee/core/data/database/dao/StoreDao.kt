@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface StoreDao {
     @Upsert
-    fun upsertAll(stores: List<StoreEntity>)
+    suspend fun upsertAll(stores: List<StoreEntity>)
 
     @Query("DELETE FROM stores WHERE id NOT IN (:ids)")
-    fun deleteStoresNotIn(ids: List<String>)
+    suspend fun deleteStoresNotIn(ids: List<String>)
 
     @Query("SELECT * FROM stores ORDER BY prefCode ASC, name ASC")
     fun observeAll(): Flow<List<StoreEntity>>
 
     @Query("SELECT id FROM stores")
-    fun ids(): List<String>
+    suspend fun ids(): List<String>
 }

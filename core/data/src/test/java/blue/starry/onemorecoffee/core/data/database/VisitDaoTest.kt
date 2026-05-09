@@ -6,6 +6,7 @@ import blue.starry.onemorecoffee.core.data.database.entity.VisitEntity
 import blue.starry.onemorecoffee.core.domain.model.VisitSource
 import com.google.common.truth.Truth.assertThat
 import java.time.LocalDate
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +31,7 @@ class VisitDaoTest {
     }
 
     @Test
-    fun insertIgnore_returnsMinusOneForDuplicatedStoreAndDate() {
+    fun insertIgnore_returnsMinusOneForDuplicatedStoreAndDate() = runTest {
         val visit = visit(storeId = "store-1", visitedOn = LocalDate.of(2026, 5, 9))
 
         val first = database.visitDao().insertIgnore(visit)
@@ -42,7 +43,7 @@ class VisitDaoTest {
     }
 
     @Test
-    fun insertIgnore_allowsSameStoreOnDifferentDates() {
+    fun insertIgnore_allowsSameStoreOnDifferentDates() = runTest {
         val visits = listOf(
             visit(storeId = "store-1", visitedOn = LocalDate.of(2026, 5, 9)),
             visit(storeId = "store-1", visitedOn = LocalDate.of(2026, 5, 10)),
@@ -56,7 +57,7 @@ class VisitDaoTest {
     }
 
     @Test
-    fun insertIgnore_allowsDifferentStoresOnSameDate() {
+    fun insertIgnore_allowsDifferentStoresOnSameDate() = runTest {
         val visits = listOf(
             visit(storeId = "store-1", visitedOn = LocalDate.of(2026, 5, 9)),
             visit(storeId = "store-2", visitedOn = LocalDate.of(2026, 5, 9)),
