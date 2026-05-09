@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +7,40 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.mapsplatform.secrets)
 }
+
+fun loadRootProperties(path: String): Properties {
+    val properties = Properties()
+    val file = rootProject.file(path)
+
+    if (file.isFile) {
+        file.inputStream().use(properties::load)
+    }
+
+    return properties
+}
+
+fun Properties.nonBlankProperty(name: String): String? = getProperty(name)?.takeIf { it.isNotBlank() }
+
+fun String.asBuildConfigStringLiteral(): String = buildString {
+    append('"')
+
+    for (character in this@asBuildConfigStringLiteral) {
+        when (character) {
+            '\\' -> append("\\\\")
+            '"' -> append("\\\"")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> append(character)
+        }
+    }
+
+    append('"')
+}
+
+val mapsApiKey = loadRootProperties("secrets.properties").nonBlankProperty("MAPS_API_KEY")
+    ?: loadRootProperties("secrets.defaults.properties").nonBlankProperty("MAPS_API_KEY")
+    ?: "DEFAULT_API_KEY"
 
 android {
     namespace = "blue.starry.onemorecoffee"
@@ -20,12 +56,16 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("String", "MAPS_API_KEY", mapsApiKey.asBuildConfigStringLiteral())
     }
 }
 
 secrets {
     propertiesFileName = "secrets.properties"
     defaultPropertiesFileName = rootProject.relativePath("secrets.defaults.properties")
+    ignoreList.add("MAPS_API_KEY")
 }
 
 dependencies {
