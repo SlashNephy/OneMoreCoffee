@@ -1,14 +1,21 @@
 package blue.starry.onemorecoffee.core.data.starbucks
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.Json
 
 class StarbucksStoreClient(
     private val httpClient: HttpClient,
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+    },
+    private val pageDelay: suspend () -> Unit = {
+        delay(PAGE_DELAY_MILLIS)
+    },
 ) {
     suspend fun fetchAllStores(): List<CloudSearchResponse.Hit> {
         val stores = mutableListOf<CloudSearchResponse.Hit>()
@@ -18,18 +25,18 @@ class StarbucksStoreClient(
             val response = fetchPage(start)
             stores += response.hits.hit
 
-            val nextStart = response.hits.start + response.hits.hit.size
+            val nextStart = response.hits.start + PAGE_SIZE
             if (nextStart >= response.hits.found || response.hits.hit.isEmpty()) {
                 return stores
             }
 
-            delay(PAGE_DELAY_MILLIS)
+            pageDelay()
             start = nextStart
         }
     }
 
     private suspend fun fetchPage(start: Int): CloudSearchResponse {
-        return httpClient.get(STORE_SEARCH_ENDPOINT) {
+        val response = httpClient.get(STORE_SEARCH_ENDPOINT) {
             parameter("size", PAGE_SIZE)
             parameter("q.parser", "structured")
             parameter("q", "(and ver:10000 record_type:1)")
@@ -38,7 +45,9 @@ class StarbucksStoreClient(
             parameter("start", start)
             header("Referer", "https://store.starbucks.co.jp/")
             header("User-Agent", USER_AGENT)
-        }.body()
+        }
+
+        return json.decodeFromString<CloudSearchResponse>(response.bodyAsText())
     }
 
     private companion object {

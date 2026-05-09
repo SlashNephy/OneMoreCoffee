@@ -48,8 +48,7 @@ androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-com
 ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }

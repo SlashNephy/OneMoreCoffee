@@ -82,6 +82,62 @@ class StoreFieldMapperTest {
     }
 
     @Test
+    fun toEntity_returnsNullIfPrefCodeMissing() {
+        val fields = jsonObject(
+            """
+            {
+              "store_id": ["1369"],
+              "name": ["銀座松屋通り店"],
+              "address_1": ["東京都"],
+              "location": ["35.672090,139.765320"]
+            }
+            """.trimIndent(),
+        )
+
+        val entity = StoreFieldMapper.toEntity(fields, rawJson = "{}")
+
+        assertThat(entity).isNull()
+    }
+
+    @Test
+    fun toEntity_returnsNullIfAddress1Missing() {
+        val fields = jsonObject(
+            """
+            {
+              "store_id": ["1369"],
+              "name": ["銀座松屋通り店"],
+              "pref_code": ["13"],
+              "address_2": ["中央区"],
+              "location": ["35.672090,139.765320"]
+            }
+            """.trimIndent(),
+        )
+
+        val entity = StoreFieldMapper.toEntity(fields, rawJson = "{}")
+
+        assertThat(entity).isNull()
+    }
+
+    @Test
+    fun toEntity_returnsNullIfFullAddressBlank() {
+        val fields = jsonObject(
+            """
+            {
+              "store_id": ["1369"],
+              "name": ["銀座松屋通り店"],
+              "pref_code": ["13"],
+              "address_1": ["   "],
+              "location": ["35.672090,139.765320"]
+            }
+            """.trimIndent(),
+        )
+
+        val entity = StoreFieldMapper.toEntity(fields, rawJson = "{}")
+
+        assertThat(entity).isNull()
+    }
+
+    @Test
     fun toEntity_handlesPrimitiveStringFields() {
         val now = Instant.parse("2026-05-09T12:34:56Z")
         val fields = jsonObject(
