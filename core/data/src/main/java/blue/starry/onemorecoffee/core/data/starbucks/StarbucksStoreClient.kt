@@ -5,8 +5,13 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
+
+interface StarbucksStoreDataSource {
+    suspend fun fetchAllStores(): List<CloudSearchResponse.Hit>
+}
 
 class StarbucksStoreClient(
     private val httpClient: HttpClient,
@@ -16,8 +21,16 @@ class StarbucksStoreClient(
     private val pageDelay: suspend () -> Unit = {
         delay(PAGE_DELAY_MILLIS)
     },
-) {
-    suspend fun fetchAllStores(): List<CloudSearchResponse.Hit> {
+) : StarbucksStoreDataSource {
+    @Inject
+    constructor(httpClient: HttpClient) : this(
+        httpClient = httpClient,
+        json = Json {
+            ignoreUnknownKeys = true
+        },
+    )
+
+    override suspend fun fetchAllStores(): List<CloudSearchResponse.Hit> {
         val stores = mutableListOf<CloudSearchResponse.Hit>()
         var start = 0
 
