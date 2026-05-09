@@ -10,6 +10,10 @@ android {
     namespace = "blue.starry.onemorecoffee"
     compileSdk = 36
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "blue.starry.onemorecoffee"
         minSdk = 26
