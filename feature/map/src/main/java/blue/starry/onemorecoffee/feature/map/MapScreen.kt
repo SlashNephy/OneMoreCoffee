@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -23,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -146,11 +152,13 @@ private fun StoreMap(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val layoutDirection = LocalLayoutDirection.current
     var selectedStore by remember { mutableStateOf<StoreVisitSummary?>(null) }
     var hasLocationPermission by remember {
         mutableStateOf(context.hasLocationPermission())
     }
     var movedToInitialLocation by remember { mutableStateOf(false) }
+    var locationMoveRequest by remember { mutableIntStateOf(0) }
     val tokyoStation = LatLng(35.681236, 139.767125)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(tokyoStation, 11f)
@@ -175,7 +183,13 @@ private fun StoreMap(
 
     LaunchedEffect(hasLocationPermission) {
         if (hasLocationPermission && !movedToInitialLocation) {
+            locationMoveRequest += 1
             movedToInitialLocation = true
+        }
+    }
+
+    LaunchedEffect(locationMoveRequest) {
+        if (locationMoveRequest > 0 && hasLocationPermission) {
             context.currentLatLngOrNull()?.let { currentLocation ->
                 cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(currentLocation, 14f))
             }
@@ -189,7 +203,7 @@ private fun StoreMap(
             contentPadding = contentPadding,
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = MapUiSettings(
-                myLocationButtonEnabled = hasLocationPermission,
+                myLocationButtonEnabled = false,
                 zoomControlsEnabled = true,
             ),
         ) {
@@ -215,6 +229,33 @@ private fun StoreMap(
                 }
             }
         }
+
+        FloatingActionButton(
+            onClick = {
+                if (!hasLocationPermission) {
+                    locationPermissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                        ),
+                    )
+                    return@FloatingActionButton
+                }
+                locationMoveRequest += 1
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(
+                    end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
+                    bottom = contentPadding.calculateBottomPadding() + 16.dp,
+                ),
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_menu_mylocation),
+                contentDescription = "現在位置へ移動",
+            )
+        }
+
     }
 
     selectedStore?.let { store ->
