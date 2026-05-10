@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.android.maps.compose)
+    implementation(libs.android.maps.compose.utils)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
     implementation(libs.androidx.activity.compose)
