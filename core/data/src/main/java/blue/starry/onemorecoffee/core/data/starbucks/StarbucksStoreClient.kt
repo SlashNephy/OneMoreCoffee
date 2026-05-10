@@ -7,11 +7,14 @@ import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import javax.inject.Inject
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshProgress
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 
 interface StarbucksStoreDataSource {
-    suspend fun fetchAllStores(): List<CloudSearchResponse.Hit>
+    suspend fun fetchAllStores(
+        onProgress: (StoreRefreshProgress.Fetching) -> Unit = {},
+    ): List<CloudSearchResponse.Hit>
 }
 
 class StarbucksStoreClient(
@@ -31,13 +34,21 @@ class StarbucksStoreClient(
         },
     )
 
-    override suspend fun fetchAllStores(): List<CloudSearchResponse.Hit> {
+    override suspend fun fetchAllStores(
+        onProgress: (StoreRefreshProgress.Fetching) -> Unit,
+    ): List<CloudSearchResponse.Hit> {
         val stores = mutableListOf<CloudSearchResponse.Hit>()
         var start = 0
 
         while (true) {
             val response = fetchPage(start)
             stores += response.hits.hit
+            onProgress(
+                StoreRefreshProgress.Fetching(
+                    fetched = stores.size,
+                    total = response.hits.found,
+                ),
+            )
 
             val nextStart = response.hits.start + PAGE_SIZE
             if (nextStart >= response.hits.found || response.hits.hit.isEmpty()) {

@@ -2,6 +2,7 @@ package blue.starry.onemorecoffee.feature.settings
 
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
 import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshResult
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshProgress
 import blue.starry.onemorecoffee.core.domain.repository.StoreRepository
 import blue.starry.onemorecoffee.core.domain.repository.VisitImportResult
 import blue.starry.onemorecoffee.core.domain.repository.VisitRepository
@@ -53,6 +54,25 @@ class SettingsScreenViewModelTest {
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.isLoading).isFalse()
+        assertThat(viewModel.uiState.value.progressMessage).isNull()
+        assertThat(viewModel.uiState.value.statusMessage).isEqualTo("店舗データを更新しました: 3 件更新, 1 件スキップ")
+    }
+
+    @Test
+    fun refreshStores_updatesProgressMessage() = runTest {
+        storeRepository.progressEvents = listOf(
+            StoreRefreshProgress.Connecting,
+            StoreRefreshProgress.Fetching(fetched = 42, total = 100),
+        )
+        val viewModel = newViewModel()
+
+        viewModel.refreshStores()
+        advanceUntilIdle()
+
+        assertThat(storeRepository.observedProgress).containsExactly(
+            StoreRefreshProgress.Connecting,
+            StoreRefreshProgress.Fetching(fetched = 42, total = 100),
+        ).inOrder()
         assertThat(viewModel.uiState.value.statusMessage).isEqualTo("店舗データを更新しました: 3 件更新, 1 件スキップ")
     }
 
@@ -89,14 +109,22 @@ class SettingsScreenViewModelTest {
     private class FakeStoreRepository : StoreRepository {
         var error: Throwable? = null
         var refreshGate: CompletableDeferred<Unit>? = null
+        var progressEvents: List<StoreRefreshProgress> = emptyList()
+        val observedProgress = mutableListOf<StoreRefreshProgress>()
 
         override fun observeStoreSummaries(): Flow<List<StoreVisitSummary>> {
             return emptyFlow()
         }
 
-        override suspend fun refreshStores(): StoreRefreshResult {
+        override suspend fun refreshStores(
+            onProgress: (StoreRefreshProgress) -> Unit,
+        ): StoreRefreshResult {
             refreshGate?.await()
             error?.let { throw it }
+            progressEvents.forEach { event ->
+                observedProgress += event
+                onProgress(event)
+            }
             return StoreRefreshResult(upserted = 3, skipped = 1)
         }
     }

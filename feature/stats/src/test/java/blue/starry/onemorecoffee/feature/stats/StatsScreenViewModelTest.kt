@@ -2,6 +2,7 @@ package blue.starry.onemorecoffee.feature.stats
 
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
 import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshResult
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshProgress
 import blue.starry.onemorecoffee.core.domain.repository.StoreRepository
 import blue.starry.onemorecoffee.core.domain.usecase.ObserveProgressStatsUseCase
 import com.google.common.truth.Truth.assertThat
@@ -92,7 +93,9 @@ class StatsScreenViewModelTest {
             return summaries
         }
 
-        override suspend fun refreshStores(): StoreRefreshResult {
+        override suspend fun refreshStores(
+            onProgress: (StoreRefreshProgress) -> Unit,
+        ): StoreRefreshResult {
             return StoreRefreshResult(upserted = 0, skipped = 0)
         }
     }

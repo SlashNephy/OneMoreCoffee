@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import blue.starry.onemorecoffee.core.ui.StoreRefreshProgressDialog
 
 @Composable
 fun SettingsScreen(
@@ -83,5 +84,9 @@ private fun SettingsContent(
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
+    }
+
+    uiState.progressMessage?.let { message ->
+        StoreRefreshProgressDialog(message = message)
     }
 }

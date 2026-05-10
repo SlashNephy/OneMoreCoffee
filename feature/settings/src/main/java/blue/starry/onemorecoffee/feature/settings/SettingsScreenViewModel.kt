@@ -3,6 +3,7 @@ package blue.starry.onemorecoffee.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import blue.starry.onemorecoffee.core.domain.repository.StoreRepository
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshProgress
 import blue.starry.onemorecoffee.core.domain.repository.VisitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -23,14 +24,23 @@ class SettingsScreenViewModel @Inject constructor(
     fun refreshStores() {
         viewModelScope.launch {
             mutableUiState.update { state ->
-                state.copy(isLoading = true, statusMessage = null)
+                state.copy(
+                    isLoading = true,
+                    progressMessage = "店舗マスタに接続しています",
+                    statusMessage = null,
+                )
             }
 
             try {
-                val result = storeRepository.refreshStores()
+                val result = storeRepository.refreshStores { progress ->
+                    mutableUiState.update { state ->
+                        state.copy(progressMessage = progress.toMessage())
+                    }
+                }
                 mutableUiState.update { state ->
                     state.copy(
                         isLoading = false,
+                        progressMessage = null,
                         statusMessage = "店舗データを更新しました: ${result.upserted} 件更新, ${result.skipped} 件スキップ",
                     )
                 }
@@ -42,6 +52,7 @@ class SettingsScreenViewModel @Inject constructor(
                 mutableUiState.update { state ->
                     state.copy(
                         isLoading = false,
+                        progressMessage = null,
                         statusMessage = "Failed to refresh stores: ${error.message ?: error::class.simpleName}",
                     )
                 }
@@ -52,7 +63,7 @@ class SettingsScreenViewModel @Inject constructor(
     fun logoutImporter() {
         viewModelScope.launch {
             mutableUiState.update { state ->
-                state.copy(isLoading = true, statusMessage = null)
+                state.copy(isLoading = true, progressMessage = null, statusMessage = null)
             }
 
             try {
@@ -75,6 +86,23 @@ class SettingsScreenViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    private fun StoreRefreshProgress.toMessage(): String {
+        return when (this) {
+            StoreRefreshProgress.Connecting -> "店舗マスタに接続しています"
+            is StoreRefreshProgress.Fetching -> buildString {
+                append("店舗マスタを取得しています: ")
+                append(fetched)
+                total?.let { total ->
+                    append(" / ")
+                    append(total)
+                }
+                append(" 件")
+            }
+            StoreRefreshProgress.Saving -> "店舗マスタを保存しています"
+            is StoreRefreshProgress.Finished -> "店舗マスタを更新しました"
         }
     }
 }

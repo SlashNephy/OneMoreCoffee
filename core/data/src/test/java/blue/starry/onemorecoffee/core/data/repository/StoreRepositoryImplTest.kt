@@ -6,6 +6,8 @@ import blue.starry.onemorecoffee.core.data.database.OneMoreCoffeeDatabase
 import blue.starry.onemorecoffee.core.data.database.entity.StoreEntity
 import blue.starry.onemorecoffee.core.data.starbucks.CloudSearchResponse
 import blue.starry.onemorecoffee.core.data.starbucks.StarbucksStoreDataSource
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshProgress
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshResult
 import com.google.common.truth.Truth.assertThat
 import java.time.Instant
 import kotlinx.coroutines.flow.first
@@ -80,6 +82,29 @@ class StoreRepositoryImplTest {
         assertThat(database.storeDao().observeAll().first()).isEmpty()
     }
 
+    @Test
+    fun refreshStores_reportsProgressFromFetchingToFinished() = runTest {
+        val repository = StoreRepositoryImpl(
+            storeDao = database.storeDao(),
+            starbucksStoreDataSource = FakeStarbucksStoreDataSource(
+                hits = listOf(hit("store-1", location = "35.0,139.0")),
+                progressEvents = listOf(StoreRefreshProgress.Fetching(fetched = 1, total = 2)),
+            ),
+        )
+        val progress = mutableListOf<StoreRefreshProgress>()
+
+        repository.refreshStores { event ->
+            progress += event
+        }
+
+        assertThat(progress).containsExactly(
+            StoreRefreshProgress.Connecting,
+            StoreRefreshProgress.Fetching(fetched = 1, total = 2),
+            StoreRefreshProgress.Saving,
+            StoreRefreshProgress.Finished(StoreRefreshResult(upserted = 1, skipped = 0)),
+        ).inOrder()
+    }
+
     private fun store(id: String): StoreEntity {
         return StoreEntity(
             id = id,
@@ -125,8 +150,12 @@ class StoreRepositoryImplTest {
 
     private class FakeStarbucksStoreDataSource(
         private val hits: List<CloudSearchResponse.Hit>,
+        private val progressEvents: List<StoreRefreshProgress.Fetching> = emptyList(),
     ) : StarbucksStoreDataSource {
-        override suspend fun fetchAllStores(): List<CloudSearchResponse.Hit> {
+        override suspend fun fetchAllStores(
+            onProgress: (StoreRefreshProgress.Fetching) -> Unit,
+        ): List<CloudSearchResponse.Hit> {
+            progressEvents.forEach(onProgress)
             return hits
         }
     }
