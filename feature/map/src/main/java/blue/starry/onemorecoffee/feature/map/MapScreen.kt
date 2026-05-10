@@ -227,6 +227,7 @@ private fun StoreMap(
             uiSettings = MapUiSettings(
                 myLocationButtonEnabled = false,
                 zoomControlsEnabled = false,
+                rotationGesturesEnabled = false,
             ),
         ) {
             val clusterManager = rememberClusterManager<StoreClusterItem>()
