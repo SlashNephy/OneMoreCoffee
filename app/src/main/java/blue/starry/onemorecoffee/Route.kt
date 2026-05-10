@@ -11,6 +11,6 @@ enum class Route(
     ;
 
     companion object {
-        val bottomTabs = entries.toList()
+        val bottomTabs = listOf(Map, List, Stats)
     }
 }
