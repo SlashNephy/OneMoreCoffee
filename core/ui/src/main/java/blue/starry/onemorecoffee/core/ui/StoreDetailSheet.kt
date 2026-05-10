@@ -36,7 +36,7 @@ fun StoreDetailSheet(
     ) {
         Text(
             text = store.name,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLargeEmphasized,
         )
         Text(
             text = store.fullAddress,
@@ -66,26 +66,14 @@ private fun StoreVisitSummary.visitStatusText(): String {
 }
 
 private fun Context.openMapSearch(store: StoreVisitSummary) {
-    val label = Uri.encode(store.name)
-    val geoUri = Uri.parse("geo:0,0?q=${store.latitude},${store.longitude}($label)")
+    val label = Uri.encode("スターバックス コーヒー ${store.name}")
+    val geoUri = Uri.parse("geo:${store.latitude},${store.longitude}?q=$label")
     val geoIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
-        setPackage("com.google.android.apps.maps")
         addNewTaskFlagIfNeeded(this@openMapSearch)
     }
 
     try {
         startActivity(geoIntent)
-        return
-    } catch (exception: ActivityNotFoundException) {
-        Log.w(TAG, "Google Maps app is not available, trying generic map search.", exception)
-    }
-
-    val fallbackIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
-        addNewTaskFlagIfNeeded(this@openMapSearch)
-    }
-
-    try {
-        startActivity(fallbackIntent)
     } catch (exception: ActivityNotFoundException) {
         Log.w(TAG, "Map app is not available.", exception)
     }
