@@ -6,6 +6,7 @@
     <application
         android:name=".OneMoreCoffeeApplication"
         android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.android.geo.API_KEY"

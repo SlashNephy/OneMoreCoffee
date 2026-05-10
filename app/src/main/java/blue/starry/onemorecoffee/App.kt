@@ -3,6 +3,7 @@ package blue.starry.onemorecoffee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import blue.starry.onemorecoffee.feature.importer.ImportScreen
 import blue.starry.onemorecoffee.feature.list.StoreListScreen
 import blue.starry.onemorecoffee.feature.map.MapScreen
@@ -37,7 +39,12 @@ fun App() {
                             label = {
                                 Text(route.label)
                             },
-                            icon = {},
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = route.iconResId),
+                                    contentDescription = null,
+                                )
+                            },
                         )
                     }
                 }
@@ -47,7 +54,13 @@ fun App() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding),
+                .then(
+                    if (showsImportScreen || currentRoute != Route.Map) {
+                        Modifier.padding(contentPadding)
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
             if (showsImportScreen) {
                 ImportScreen(
@@ -59,7 +72,10 @@ fun App() {
                 )
             } else {
                 when (currentRoute) {
-                    Route.Map -> MapScreen(modifier = Modifier.fillMaxSize())
+                    Route.Map -> MapScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = contentPadding,
+                    )
                     Route.List -> StoreListScreen(modifier = Modifier.fillMaxSize())
                     Route.Stats -> StatsScreen(modifier = Modifier.fillMaxSize())
                     Route.Settings -> SettingsScreen(
