@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import blue.starry.onemorecoffee.feature.importer.ImportScreen
 import blue.starry.onemorecoffee.feature.list.StoreListScreen
 import blue.starry.onemorecoffee.feature.map.MapScreen
 import blue.starry.onemorecoffee.feature.settings.SettingsScreen
@@ -21,21 +22,24 @@ import blue.starry.onemorecoffee.feature.stats.StatsScreen
 @Composable
 fun App() {
     var currentRoute by remember { mutableStateOf(Route.Map) }
+    var showsImportScreen by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                Route.bottomTabs.forEach { route ->
-                    NavigationBarItem(
-                        selected = currentRoute == route,
-                        onClick = {
-                            currentRoute = route
-                        },
-                        label = {
-                            Text(route.label)
-                        },
-                        icon = {},
-                    )
+            if (!showsImportScreen) {
+                NavigationBar {
+                    Route.bottomTabs.forEach { route ->
+                        NavigationBarItem(
+                            selected = currentRoute == route,
+                            onClick = {
+                                currentRoute = route
+                            },
+                            label = {
+                                Text(route.label)
+                            },
+                            icon = {},
+                        )
+                    }
                 }
             }
         },
@@ -45,11 +49,26 @@ fun App() {
                 .fillMaxSize()
                 .padding(contentPadding),
         ) {
-            when (currentRoute) {
-                Route.Map -> MapScreen(modifier = Modifier.fillMaxSize())
-                Route.List -> StoreListScreen(modifier = Modifier.fillMaxSize())
-                Route.Stats -> StatsScreen(modifier = Modifier.fillMaxSize())
-                Route.Settings -> SettingsScreen(modifier = Modifier.fillMaxSize())
+            if (showsImportScreen) {
+                ImportScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    onBackClick = {
+                        currentRoute = Route.Settings
+                        showsImportScreen = false
+                    },
+                )
+            } else {
+                when (currentRoute) {
+                    Route.Map -> MapScreen(modifier = Modifier.fillMaxSize())
+                    Route.List -> StoreListScreen(modifier = Modifier.fillMaxSize())
+                    Route.Stats -> StatsScreen(modifier = Modifier.fillMaxSize())
+                    Route.Settings -> SettingsScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        onImportClick = {
+                            showsImportScreen = true
+                        },
+                    )
+                }
             }
         }
     }
