@@ -1,5 +1,5 @@
 [versions]
-android-gradle-plugin = "9.0.1"
+android-gradle-plugin = "9.2.1"
 kotlin = "2.2.21"
 ksp = "2.3.7"
 androidx-activity = "1.13.0"
