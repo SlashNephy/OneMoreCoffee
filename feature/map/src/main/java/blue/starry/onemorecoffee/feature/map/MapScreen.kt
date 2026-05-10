@@ -204,7 +204,7 @@ private fun StoreMap(
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = MapUiSettings(
                 myLocationButtonEnabled = false,
-                zoomControlsEnabled = true,
+                zoomControlsEnabled = false,
             ),
         ) {
             stores.forEach { store ->
