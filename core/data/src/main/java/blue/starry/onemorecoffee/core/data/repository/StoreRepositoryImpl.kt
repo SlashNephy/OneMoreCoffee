@@ -4,6 +4,7 @@ import blue.starry.onemorecoffee.core.data.database.dao.StoreDao
 import blue.starry.onemorecoffee.core.data.starbucks.StarbucksStoreDataSource
 import blue.starry.onemorecoffee.core.data.starbucks.StoreFieldMapper
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
+import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshProgress
 import blue.starry.onemorecoffee.core.domain.repository.StoreRefreshResult
 import blue.starry.onemorecoffee.core.domain.repository.StoreRepository
 import javax.inject.Inject
@@ -17,8 +18,14 @@ class StoreRepositoryImpl @Inject constructor(
         return storeDao.observeSummaries()
     }
 
-    override suspend fun refreshStores(): StoreRefreshResult {
-        val hits = starbucksStoreDataSource.fetchAllStores()
+    override suspend fun refreshStores(
+        onProgress: (StoreRefreshProgress) -> Unit,
+    ): StoreRefreshResult {
+        onProgress(StoreRefreshProgress.Connecting)
+
+        val hits = starbucksStoreDataSource.fetchAllStores { progress ->
+            onProgress(progress)
+        }
         val stores = hits.mapNotNull { hit ->
             StoreFieldMapper.toEntity(
                 fields = hit.fields,
@@ -26,6 +33,7 @@ class StoreRepositoryImpl @Inject constructor(
             )
         }
 
+        onProgress(StoreRefreshProgress.Saving)
         storeDao.upsertAll(stores)
         if (stores.isEmpty()) {
             storeDao.deleteAllStores()
@@ -33,9 +41,11 @@ class StoreRepositoryImpl @Inject constructor(
             storeDao.deleteStoresNotIn(stores.map { store -> store.id })
         }
 
-        return StoreRefreshResult(
+        val result = StoreRefreshResult(
             upserted = stores.size,
             skipped = hits.size - stores.size,
         )
+        onProgress(StoreRefreshProgress.Finished(result))
+        return result
     }
 }

@@ -18,10 +18,7 @@ object StoreFieldMapper {
         val location = fields.firstString("location")?.toLocation() ?: return null
         val prefCode = fields.firstString("pref_code") ?: return null
         val prefecture = fields.firstString("address_1") ?: return null
-        val addressParts = (1..5).mapNotNull { index ->
-            fields.firstString("address_$index")
-        }
-        val fullAddress = addressParts.joinToString(separator = "").takeIf { it.isNotBlank() } ?: return null
+        val fullAddress = fields.firstString("address_5") ?: return null
 
         return StoreEntity(
             id = storeId,

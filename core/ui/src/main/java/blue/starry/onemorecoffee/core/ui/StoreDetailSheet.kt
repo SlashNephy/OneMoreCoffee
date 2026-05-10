@@ -36,7 +36,7 @@ fun StoreDetailSheet(
     ) {
         Text(
             text = store.name,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLargeEmphasized,
         )
         Text(
             text = store.fullAddress,
@@ -49,10 +49,10 @@ fun StoreDetailSheet(
         )
         Button(
             onClick = {
-                context.openNavigation(store)
+                context.openMapSearch(store)
             },
         ) {
-            Text(text = "経路検索")
+            Text(text = "場所を検索")
         }
     }
 }
@@ -65,23 +65,11 @@ private fun StoreVisitSummary.visitStatusText(): String {
     }
 }
 
-private fun Context.openNavigation(store: StoreVisitSummary) {
-    val navigationUri = Uri.parse("google.navigation:q=${store.latitude},${store.longitude}")
-    val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri).apply {
-        addNewTaskFlagIfNeeded(this@openNavigation)
-    }
-
-    try {
-        startActivity(navigationIntent)
-        return
-    } catch (exception: ActivityNotFoundException) {
-        Log.w(TAG, "Navigation app is not available, trying geo fallback.", exception)
-    }
-
-    val label = Uri.encode(store.name)
-    val geoUri = Uri.parse("geo:0,0?q=${store.latitude},${store.longitude}($label)")
+private fun Context.openMapSearch(store: StoreVisitSummary) {
+    val label = Uri.encode("スターバックス コーヒー ${store.name}")
+    val geoUri = Uri.parse("geo:${store.latitude},${store.longitude}?q=$label")
     val geoIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
-        addNewTaskFlagIfNeeded(this@openNavigation)
+        addNewTaskFlagIfNeeded(this@openMapSearch)
     }
 
     try {

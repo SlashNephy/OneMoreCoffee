@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import blue.starry.onemorecoffee.core.ui.StoreRefreshProgressDialog
 
 @Composable
 fun SettingsScreen(
@@ -71,17 +72,15 @@ private fun SettingsContent(
             Text("ログアウト")
         }
 
-        Text(
-            text = "Maps API キーは Android アプリ制限とパッケージ名・署名証明書の制限を設定してください。",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
         uiState.statusMessage?.let { message ->
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
+    }
+
+    uiState.progressMessage?.let { message ->
+        StoreRefreshProgressDialog(message = message)
     }
 }
