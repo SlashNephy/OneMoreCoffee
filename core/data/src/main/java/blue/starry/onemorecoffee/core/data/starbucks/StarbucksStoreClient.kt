@@ -5,6 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
@@ -56,8 +57,9 @@ class StarbucksStoreClient(
             parameter("fq", "(and data_type:'prd')")
             parameter("sort", "zip_code asc,store_id asc")
             parameter("start", start)
-            header("Referer", "https://store.starbucks.co.jp/")
-            header("User-Agent", USER_AGENT)
+            header(HttpHeaders.Origin, "https://store.starbucks.co.jp")
+            header(HttpHeaders.Referrer, "https://store.starbucks.co.jp/")
+            header(HttpHeaders.UserAgent, USER_AGENT)
         }
 
         return json.decodeFromString<CloudSearchResponse>(response.bodyAsText())
