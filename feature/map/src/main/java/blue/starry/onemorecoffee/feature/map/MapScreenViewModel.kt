@@ -71,7 +71,7 @@ class MapScreenViewModel @Inject constructor(
                         statusMessage = "店舗データを更新しました: ${result.upserted} 件更新, ${result.skipped} 件スキップ",
                     )
                 }
-            } catch (error: Throwable) {
+            } catch (error: Exception) {
                 if (error is CancellationException) {
                     throw error
                 }

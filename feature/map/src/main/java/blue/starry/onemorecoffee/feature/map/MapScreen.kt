@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -80,6 +82,7 @@ fun MapScreen(
             )
             is MapContentState.Ready -> StoreMap(
                 stores = content.stores,
+                contentPadding = contentPadding,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -145,9 +148,11 @@ private fun EmptyMap(
 @Composable
 private fun StoreMap(
     stores: List<StoreVisitSummary>,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val layoutDirection = LocalLayoutDirection.current
     var selectedStore by remember { mutableStateOf<StoreVisitSummary?>(null) }
     var hasLocationPermission by remember {
         mutableStateOf(context.hasLocationPermission())
@@ -195,6 +200,7 @@ private fun StoreMap(
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
+            contentPadding = contentPadding,
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = MapUiSettings(
                 myLocationButtonEnabled = false,
@@ -239,7 +245,10 @@ private fun StoreMap(
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 112.dp),
+                .padding(
+                    end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
+                    bottom = contentPadding.calculateBottomPadding() + 16.dp,
+                ),
         ) {
             Icon(
                 painter = painterResource(id = android.R.drawable.ic_menu_mylocation),
@@ -274,7 +283,7 @@ private suspend fun Context.currentLatLngOrNull(): LatLng? {
     val client = LocationServices.getFusedLocationProviderClient(this)
     val tokenSource = CancellationTokenSource()
     val location = suspendCancellableCoroutine<Location?> { continuation ->
-        client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, tokenSource.token)
+        client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, tokenSource.token)
             .addOnSuccessListener { location ->
                 continuation.resume(location)
             }
