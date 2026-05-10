@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -62,6 +63,7 @@ private fun ImportContent(
     modifier: Modifier = Modifier,
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
+    val context = LocalContext.current
     DisposableEffect(Unit) {
         onDispose {
             webView?.removeJavascriptInterface(BridgeName)
@@ -101,9 +103,13 @@ private fun ImportContent(
         StatusMessage(uiState = uiState)
 
         AndroidView(
-            factory = { context ->
+            factory = {
                 WebView(context).apply {
-                    val bridge = StarbucksImportBridge(onJsonReceived)
+                    val bridge = StarbucksImportBridge { json ->
+                        post {
+                            onJsonReceived(json)
+                        }
+                    }
                     webView = this
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
@@ -195,5 +201,7 @@ private class StarbucksWebViewClient : WebViewClient() {
 }
 
 private fun Uri.isAllowedStarbucksUrl(): Boolean {
-    return scheme == "https" && host?.endsWith("starbucks.co.jp") == true
+    val currentHost = host ?: return false
+    return scheme == "https" &&
+        (currentHost == "starbucks.co.jp" || currentHost.endsWith(".starbucks.co.jp"))
 }
