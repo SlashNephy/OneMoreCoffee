@@ -1,5 +1,6 @@
 package blue.starry.onemorecoffee.feature.list
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,18 +9,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
+import blue.starry.onemorecoffee.core.ui.StoreDetailSheet
 
 @Composable
 fun StoreListScreen(
@@ -36,6 +43,7 @@ fun StoreListScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StoreListContent(
     uiState: StoreListUiState,
@@ -43,6 +51,8 @@ private fun StoreListContent(
     onVisitedFilterChange: (VisitedFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var selectedStore by remember { mutableStateOf<StoreVisitSummary?>(null) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -85,10 +95,25 @@ private fun StoreListContent(
                     items = uiState.stores,
                     key = StoreVisitSummary::id,
                 ) { store ->
-                    StoreRow(store = store)
+                    StoreRow(
+                        store = store,
+                        onClick = {
+                            selectedStore = store
+                        },
+                    )
                     HorizontalDivider()
                 }
             }
+        }
+    }
+
+    selectedStore?.let { store ->
+        ModalBottomSheet(
+            onDismissRequest = {
+                selectedStore = null
+            },
+        ) {
+            StoreDetailSheet(store = store)
         }
     }
 }
@@ -108,11 +133,13 @@ private fun EmptyStoreList(
 @Composable
 private fun StoreRow(
     store: StoreVisitSummary,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
