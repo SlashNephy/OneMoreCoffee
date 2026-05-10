@@ -15,6 +15,7 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.11.0"
 android-maps-compose = "8.3.0"
 play-services-maps = "20.0.0"
+play-services-location = "21.3.0"
 mapsplatform-secrets = "2.0.1"
 junit = "4.13.2"
 robolectric = "4.16"
@@ -50,6 +51,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 android-maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "android-maps-compose" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }

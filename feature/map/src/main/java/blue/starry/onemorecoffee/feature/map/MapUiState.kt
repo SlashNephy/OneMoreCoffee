@@ -2,12 +2,19 @@ package blue.starry.onemorecoffee.feature.map
 
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
 
-sealed interface MapUiState {
-    data object Loading : MapUiState
+data class MapUiState(
+    val content: MapContentState = MapContentState.Loading,
+    val isRefreshing: Boolean = false,
+    val progressMessage: String? = null,
+    val statusMessage: String? = null,
+)
 
-    data object Empty : MapUiState
+sealed interface MapContentState {
+    data object Loading : MapContentState
+
+    data object Empty : MapContentState
 
     data class Ready(
         val stores: List<StoreVisitSummary>,
-    ) : MapUiState
+    ) : MapContentState
 }
