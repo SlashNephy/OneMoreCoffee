@@ -21,6 +21,7 @@ class StoreFieldMapperTest {
               "address_2": ["中央区"],
               "address_3": ["銀座3-7-14"],
               "address_4": ["ESKビル"],
+              "address_5": ["東京都 中央区 銀座3-7-14 ＥＳＫビル 1F"],
               "location": ["35.672090,139.765320"],
               "location_jp": ["43.000000,141.000000"],
               "reserve_flg": ["1"]
@@ -40,7 +41,7 @@ class StoreFieldMapperTest {
         assertThat(entity.nameEn).isEqualTo("Ginza Matsuya-dori")
         assertThat(entity.prefCode).isEqualTo("13")
         assertThat(entity.prefecture).isEqualTo("東京都")
-        assertThat(entity.fullAddress).isEqualTo("東京都中央区銀座3-7-14ESKビル")
+        assertThat(entity.fullAddress).isEqualTo("東京都 中央区 銀座3-7-14 ＥＳＫビル 1F")
         assertThat(entity.latitude).isEqualTo(35.672090)
         assertThat(entity.longitude).isEqualTo(139.765320)
         assertThat(entity.isReserve).isTrue()
@@ -126,7 +127,8 @@ class StoreFieldMapperTest {
               "store_id": ["1369"],
               "name": ["銀座松屋通り店"],
               "pref_code": ["13"],
-              "address_1": ["   "],
+              "address_1": ["東京都"],
+              "address_5": ["    "],
               "location": ["35.672090,139.765320"]
             }
             """.trimIndent(),
@@ -147,6 +149,7 @@ class StoreFieldMapperTest {
               "name": "Primitive Store",
               "pref_code": "27",
               "address_1": "大阪府",
+              "address_5": "大阪府 大阪市北区 梅田3-1-1 大丸梅田店 地下1階",
               "location": "34.702485,135.495951",
               "reserve_flg": "0"
             }
@@ -160,6 +163,7 @@ class StoreFieldMapperTest {
         assertThat(entity.name).isEqualTo("Primitive Store")
         assertThat(entity.prefCode).isEqualTo("27")
         assertThat(entity.prefecture).isEqualTo("大阪府")
+        assertThat(entity.fullAddress).isEqualTo("大阪府 大阪市北区 梅田3-1-1 大丸梅田店 地下1階")
         assertThat(entity.latitude).isEqualTo(34.702485)
         assertThat(entity.longitude).isEqualTo(135.495951)
         assertThat(entity.isReserve).isFalse()

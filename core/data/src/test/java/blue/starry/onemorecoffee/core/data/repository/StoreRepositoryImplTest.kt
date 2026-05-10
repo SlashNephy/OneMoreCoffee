@@ -52,6 +52,7 @@ class StoreRepositoryImplTest {
                     hit("store-1", location = "35.0,139.0"),
                     hit("invalid-location", location = "not-a-location"),
                     hit("invalid-prefecture", location = "35.0,139.0", prefecture = null),
+                    hit("invalid-prefecture", location = "35.0,139.0", fullAddress = null),
                 ),
             ),
         )
@@ -59,7 +60,7 @@ class StoreRepositoryImplTest {
         val result = repository.refreshStores()
 
         assertThat(result.upserted).isEqualTo(1)
-        assertThat(result.skipped).isEqualTo(2)
+        assertThat(result.skipped).isEqualTo(3)
         assertThat(database.storeDao().observeAll().first().map { it.id }).containsExactly("store-1")
     }
 
@@ -125,14 +126,18 @@ class StoreRepositoryImplTest {
         id: String,
         location: String,
         prefecture: String? = "東京都",
+        fullAddress: String? = "東京都 千代田区 丸の内1-6-4 丸の内OAZO",
     ): CloudSearchResponse.Hit {
         val fields = buildMap {
             put("store_id", array(id))
-            put("name", array("丸の内店"))
+            put("name", array("丸の内オアゾ店"))
             put("location", array(location))
             put("pref_code", array("13"))
             if (prefecture != null) {
                 put("address_1", array(prefecture))
+            }
+            if (fullAddress != null) {
+                put("address_5", array(fullAddress))
             }
             put("address_2", array("千代田区"))
             put("reserve_flg", array("0"))
