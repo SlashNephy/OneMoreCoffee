@@ -72,12 +72,6 @@ private fun SettingsContent(
             Text("ログアウト")
         }
 
-        Text(
-            text = "Maps API キーは Android アプリ制限とパッケージ名・署名証明書の制限を設定してください。",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
         uiState.statusMessage?.let { message ->
             Text(
                 text = message,
