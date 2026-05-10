@@ -60,6 +60,35 @@ android {
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", mapsApiKey.asBuildConfigStringLiteral())
     }
+
+    signingConfigs {
+        create("default") {
+            val keystoreProperties = Properties().apply {
+                rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+            }
+
+            storeFile = keystoreProperties.getProperty("android_keystore_path")?.let { file(it) }
+            storePassword = keystoreProperties.getProperty("android_keystore_password")
+            keyAlias = keystoreProperties.getProperty("android_keystore_alias")
+            keyPassword = keystoreProperties.getProperty("android_keystore_alias_password")
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("default")
+        }
+        debug {
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+        }
+    }
 }
 
 secrets {

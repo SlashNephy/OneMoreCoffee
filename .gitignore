@@ -7,3 +7,5 @@ local.properties
 secrets.properties
 *.iml
 captures/
+keystore.properties
+*.jks
