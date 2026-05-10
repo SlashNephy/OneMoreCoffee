@@ -49,10 +49,10 @@ fun StoreDetailSheet(
         )
         Button(
             onClick = {
-                context.openNavigation(store)
+                context.openMapSearch(store)
             },
         ) {
-            Text(text = "経路検索")
+            Text(text = "場所を検索")
         }
     }
 }
@@ -65,27 +65,27 @@ private fun StoreVisitSummary.visitStatusText(): String {
     }
 }
 
-private fun Context.openNavigation(store: StoreVisitSummary) {
-    val navigationUri = Uri.parse("google.navigation:q=${store.latitude},${store.longitude}")
-    val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri).apply {
-        addNewTaskFlagIfNeeded(this@openNavigation)
-    }
-
-    try {
-        startActivity(navigationIntent)
-        return
-    } catch (exception: ActivityNotFoundException) {
-        Log.w(TAG, "Navigation app is not available, trying geo fallback.", exception)
-    }
-
+private fun Context.openMapSearch(store: StoreVisitSummary) {
     val label = Uri.encode(store.name)
     val geoUri = Uri.parse("geo:0,0?q=${store.latitude},${store.longitude}($label)")
     val geoIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
-        addNewTaskFlagIfNeeded(this@openNavigation)
+        setPackage("com.google.android.apps.maps")
+        addNewTaskFlagIfNeeded(this@openMapSearch)
     }
 
     try {
         startActivity(geoIntent)
+        return
+    } catch (exception: ActivityNotFoundException) {
+        Log.w(TAG, "Google Maps app is not available, trying generic map search.", exception)
+    }
+
+    val fallbackIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
+        addNewTaskFlagIfNeeded(this@openMapSearch)
+    }
+
+    try {
+        startActivity(fallbackIntent)
     } catch (exception: ActivityNotFoundException) {
         Log.w(TAG, "Map app is not available.", exception)
     }
