@@ -1,9 +1,0 @@
-{
-  "extends": [
-    "config:recommended"
-  ],
-  "timezone": "Asia/Tokyo",
-  "labels": [
-    "dependencies"
-  ]
-}
