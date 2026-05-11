@@ -18,7 +18,7 @@ play-services-maps = "20.0.0"
 play-services-location = "21.3.0"
 mapsplatform-secrets = "2.0.1"
 junit = "4.13.2"
-robolectric = "4.16"
+robolectric = "4.16.1"
 truth = "1.4.5"
 javax-inject = "1"
 
