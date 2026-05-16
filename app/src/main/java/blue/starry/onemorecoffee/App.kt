@@ -95,6 +95,10 @@ fun App() {
                         currentRoute = Route.Settings
                         showsImportScreen = false
                     },
+                    onImportCompleted = {
+                        currentRoute = Route.Settings
+                        showsImportScreen = false
+                    },
                 )
             } else {
                 when (currentRoute) {

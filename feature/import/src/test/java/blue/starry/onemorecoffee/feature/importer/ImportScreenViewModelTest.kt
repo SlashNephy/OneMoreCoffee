@@ -7,6 +7,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -56,6 +58,19 @@ class ImportScreenViewModelTest {
 
         assertThat(repository.importedJson).isEqualTo("[{}]")
         assertThat(viewModel.uiState.value).isEqualTo(ImportUiState.Completed(repository.result))
+    }
+
+    @Test
+    fun importJson_emitsReturnToSettingsEventOnCompletedImport() = runTest {
+        val viewModel = newViewModel()
+        val event = async {
+            viewModel.returnToSettingsEvents.first()
+        }
+
+        viewModel.importJson("[{}]")
+        advanceUntilIdle()
+
+        assertThat(event.await()).isEqualTo(Unit)
     }
 
     @Test
