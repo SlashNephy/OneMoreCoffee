@@ -8,14 +8,21 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
 
@@ -37,12 +44,17 @@ fun StoreDetailSheet(
         Text(
             text = store.name,
             style = MaterialTheme.typography.titleLargeEmphasized,
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = store.fullAddress,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        BusinessHoursText(rawJson = store.rawJson)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = store.visitStatusText(),
             style = MaterialTheme.typography.bodyMedium,
@@ -57,9 +69,50 @@ fun StoreDetailSheet(
     }
 }
 
+@Composable
+private fun BusinessHoursText(rawJson: String) {
+    val businessHoursText = remember(rawJson) {
+        storeBusinessHoursText(rawJson)
+    }
+
+    when (val status = businessHoursText) {
+        is StoreBusinessHoursText.Open -> {
+            val openColor = MaterialTheme.colorScheme.primary
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = openColor, fontWeight = FontWeight.Bold)) {
+                        append("現在営業中")
+                    }
+                    append("・${status.text}")
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        is StoreBusinessHoursText.Closed -> {
+            val errorColor = MaterialTheme.colorScheme.error
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = errorColor, fontWeight = FontWeight.Bold)) {
+                        append("営業時間外")
+                    }
+                    append("・${status.nextOpeningText}")
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        StoreBusinessHoursText.Unknown -> {
+            Text(
+                text = "営業時間: 未取得",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
 private fun StoreVisitSummary.visitStatusText(): String {
     return if (isVisited) {
-        "訪問回数: $visitCount / 最終訪問: $lastVisitedOn"
+        lastVisitedOn?.let { "最終訪問: $it" } ?: "訪問済み"
     } else {
         "未訪問"
     }
