@@ -12,6 +12,7 @@ data class StoreVisitSummary(
     val isReserve: Boolean,
     val visitCount: Int,
     val lastVisitedOn: LocalDate?,
+    val rawJson: String = "{}",
 ) {
     val isVisited: Boolean
         get() = visitCount > 0

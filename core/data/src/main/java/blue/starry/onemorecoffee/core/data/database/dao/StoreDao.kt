@@ -32,7 +32,8 @@ interface StoreDao {
             stores.longitude AS longitude,
             stores.isReserve AS isReserve,
             COUNT(visits.id) AS visitCount,
-            MAX(visits.visitedOn) AS lastVisitedOn
+            MAX(visits.visitedOn) AS lastVisitedOn,
+            stores.rawJson AS rawJson
         FROM stores
         LEFT JOIN visits ON visits.storeId = stores.id
         GROUP BY
@@ -43,7 +44,8 @@ interface StoreDao {
             stores.fullAddress,
             stores.latitude,
             stores.longitude,
-            stores.isReserve
+            stores.isReserve,
+            stores.rawJson
         ORDER BY stores.prefCode ASC, stores.name ASC
         """,
     )

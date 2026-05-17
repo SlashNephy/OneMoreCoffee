@@ -55,6 +55,7 @@ class StoreDaoTest {
         assertThat(summaries.map { it.id }).containsExactly("tokyo-1", "tokyo-2", "osaka-1").inOrder()
         assertThat(summaries[0].visitCount).isEqualTo(2)
         assertThat(summaries[0].lastVisitedOn).isEqualTo(LocalDate.of(2026, 5, 9))
+        assertThat(summaries[0].rawJson).isEqualTo("{}")
         assertThat(summaries[1].visitCount).isEqualTo(0)
         assertThat(summaries[1].lastVisitedOn).isNull()
     }

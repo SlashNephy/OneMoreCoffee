@@ -16,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
 
@@ -47,12 +50,44 @@ fun StoreDetailSheet(
             text = store.visitStatusText(),
             style = MaterialTheme.typography.bodyMedium,
         )
+        BusinessHoursText(rawJson = store.rawJson)
         Button(
             onClick = {
                 context.openMapSearch(store)
             },
         ) {
             Text(text = "場所を検索")
+        }
+    }
+}
+
+@Composable
+private fun BusinessHoursText(rawJson: String) {
+    when (val status = storeBusinessHoursText(rawJson)) {
+        is StoreBusinessHoursText.Open -> {
+            Text(
+                text = status.text,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        is StoreBusinessHoursText.Closed -> {
+            val errorColor = MaterialTheme.colorScheme.error
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = errorColor)) {
+                        append("営業時間外")
+                    }
+                    append("・${status.nextOpeningText}")
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        StoreBusinessHoursText.Unknown -> {
+            Text(
+                text = "営業時間: 未取得",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
