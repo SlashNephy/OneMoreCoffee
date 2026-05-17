@@ -5,6 +5,8 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -96,7 +98,7 @@ private fun JsonObject.firstString(key: String): String? {
 
 private fun JsonElement.firstPrimitiveContent(): String? {
     return when (this) {
-        is JsonPrimitive -> runCatching { content }.getOrNull()
+        is JsonPrimitive -> content
         is JsonArray -> firstNotNullOfOrNull { element -> element.firstPrimitiveContent() }
         else -> null
     }
@@ -134,19 +136,11 @@ private fun String.toLocalTimeOrNull(): LocalTime? {
 }
 
 private fun LocalTime.displayText(): String {
-    return "${hour}:${minute.toString().padStart(2, '0')}"
+    return format(BusinessHoursTimeFormatter)
 }
 
 private val DayOfWeek.label: String
-    get() = when (this) {
-        DayOfWeek.MONDAY -> "月"
-        DayOfWeek.TUESDAY -> "火"
-        DayOfWeek.WEDNESDAY -> "水"
-        DayOfWeek.THURSDAY -> "木"
-        DayOfWeek.FRIDAY -> "金"
-        DayOfWeek.SATURDAY -> "土"
-        DayOfWeek.SUNDAY -> "日"
-    }
+    get() = getDisplayName(TextStyle.SHORT, Locale.JAPANESE)
 
 private val StoreBusinessHoursZone = ZoneId.of("Asia/Tokyo")
 private val BusinessHoursTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
