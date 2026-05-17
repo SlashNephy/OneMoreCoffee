@@ -27,6 +27,10 @@ class ImportScreenViewModel @Inject constructor(
     val returnToSettingsEvents: Flow<VisitImportResult> = mutableReturnToSettingsEvents.receiveAsFlow()
 
     fun importJson(json: String) {
+        if (json.isEmptyJsonArray()) {
+            return
+        }
+
         viewModelScope.launch {
             mutableUiState.update { ImportUiState.Importing }
 
@@ -49,6 +53,7 @@ class ImportScreenViewModel @Inject constructor(
 
     private companion object {
         private const val TAG = "ImportScreenViewModel"
+        private val EmptyJsonArrayRegex = Regex("""\[\s*]""")
 
         private fun logImportCompleted(result: VisitImportResult) {
             runCatching {
@@ -58,6 +63,10 @@ class ImportScreenViewModel @Inject constructor(
                         "unknownStoreVisits=${result.unknownStoreVisits}, failed=${result.failed}",
                 )
             }
+        }
+
+        private fun String.isEmptyJsonArray(): Boolean {
+            return trim().matches(EmptyJsonArrayRegex)
         }
     }
 }

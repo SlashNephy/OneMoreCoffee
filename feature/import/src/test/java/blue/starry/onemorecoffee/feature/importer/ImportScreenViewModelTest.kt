@@ -61,6 +61,17 @@ class ImportScreenViewModelTest {
     }
 
     @Test
+    fun importJson_ignoresEmptyStoreAllArray() = runTest {
+        val viewModel = newViewModel()
+
+        viewModel.importJson("[]")
+        advanceUntilIdle()
+
+        assertThat(repository.importedJson).isNull()
+        assertThat(viewModel.uiState.value).isEqualTo(ImportUiState.Waiting)
+    }
+
+    @Test
     fun importJson_emitsReturnToSettingsEventOnCompletedImport() = runTest {
         repository.result = VisitImportResult(inserted = 2, duplicated = 1, unknownStoreVisits = 3, failed = 4)
         val viewModel = newViewModel()

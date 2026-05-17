@@ -36,9 +36,26 @@ import blue.starry.onemorecoffee.core.domain.repository.VisitImportResult
 private const val StarbucksStoreUrl = "https://www.starbucks.co.jp/mystarbucks/mystore/"
 private const val BridgeName = "OneMoreCoffee"
 
-private val ExtractStoreAllScript = """
-    (function(){ if (window.Stamp && Array.isArray(window.Stamp.store_all)) { window.OneMoreCoffee.receiveStoreAll(JSON.stringify(window.Stamp.store_all)); } })();
-""".trimIndent()
+internal fun storeAllExtractionScript(): String {
+    return """
+        (function waitForStoreAll(attempt) {
+          if (window.__oneMoreCoffeeStoreAllSent) {
+            return;
+          }
+
+          var storeAll = window.Stamp && window.Stamp.store_all;
+          if (!Array.isArray(storeAll) || storeAll.length === 0) {
+            if (attempt < 60) {
+              setTimeout(function() { waitForStoreAll(attempt + 1); }, 500);
+            }
+            return;
+          }
+
+          window.__oneMoreCoffeeStoreAllSent = true;
+          window.OneMoreCoffee.receiveStoreAll(JSON.stringify(storeAll));
+        })(0);
+    """.trimIndent()
+}
 
 @Composable
 fun ImportScreen(
@@ -212,7 +229,7 @@ private class StarbucksWebViewClient : WebViewClient() {
         super.onPageFinished(view, url)
 
         if (url?.contains("/mystarbucks/mystore/") == true) {
-            view?.evaluateJavascript(ExtractStoreAllScript, null)
+            view?.evaluateJavascript(storeAllExtractionScript(), null)
         }
     }
 }
