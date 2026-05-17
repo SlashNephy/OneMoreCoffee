@@ -9,28 +9,38 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import blue.starry.onemorecoffee.feature.importer.ImportScreen
+import blue.starry.onemorecoffee.feature.importer.toImportCompletionMessage
 import blue.starry.onemorecoffee.feature.list.StoreListScreen
 import blue.starry.onemorecoffee.feature.map.MapScreen
 import blue.starry.onemorecoffee.feature.settings.SettingsScreen
 import blue.starry.onemorecoffee.feature.stats.StatsScreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     var currentRoute by remember { mutableStateOf(Route.Map) }
     var showsImportScreen by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             if (showsImportScreen || currentRoute != Route.Map) {
                 TopAppBar(
@@ -94,6 +104,13 @@ fun App() {
                     onBackClick = {
                         currentRoute = Route.Settings
                         showsImportScreen = false
+                    },
+                    onImportCompleted = { result ->
+                        currentRoute = Route.Settings
+                        showsImportScreen = false
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(result.toImportCompletionMessage())
+                        }
                     },
                 )
             } else {

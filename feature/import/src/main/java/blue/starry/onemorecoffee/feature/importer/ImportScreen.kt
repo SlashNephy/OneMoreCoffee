@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,21 +31,46 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import blue.starry.onemorecoffee.core.domain.repository.VisitImportResult
 
 private const val StarbucksStoreUrl = "https://www.starbucks.co.jp/mystarbucks/mystore/"
 private const val BridgeName = "OneMoreCoffee"
 
-private val ExtractStoreAllScript = """
-    (function(){ if (window.Stamp && Array.isArray(window.Stamp.store_all)) { window.OneMoreCoffee.receiveStoreAll(JSON.stringify(window.Stamp.store_all)); } })();
-""".trimIndent()
+internal fun storeAllExtractionScript(): String {
+    return """
+        (function waitForStoreAll(attempt) {
+          if (window.__oneMoreCoffeeStoreAllSent) {
+            return;
+          }
+
+          var storeAll = window.Stamp && window.Stamp.store_all;
+          if (!Array.isArray(storeAll) || storeAll.length === 0) {
+            if (attempt < 60) {
+              setTimeout(function() { waitForStoreAll(attempt + 1); }, 500);
+            }
+            return;
+          }
+
+          window.__oneMoreCoffeeStoreAllSent = true;
+          window.OneMoreCoffee.receiveStoreAll(JSON.stringify(storeAll));
+        })(0);
+    """.trimIndent()
+}
 
 @Composable
 fun ImportScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
+    onImportCompleted: (VisitImportResult) -> Unit = { onBackClick() },
     viewModel: ImportScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.returnToSettingsEvents.collect { result ->
+            onImportCompleted(result)
+        }
+    }
 
     ImportContent(
         uiState = uiState,
@@ -179,6 +205,14 @@ private fun blue.starry.onemorecoffee.core.domain.repository.VisitImportResult.t
     }
 }
 
+fun VisitImportResult.toImportCompletionMessage(): String {
+    return if (inserted > 0) {
+        "${inserted}件インポートしました。"
+    } else {
+        "新しい訪問履歴はありません。"
+    }
+}
+
 private class StarbucksWebViewClient : WebViewClient() {
     override fun shouldOverrideUrlLoading(
         view: WebView?,
@@ -195,7 +229,7 @@ private class StarbucksWebViewClient : WebViewClient() {
         super.onPageFinished(view, url)
 
         if (url?.contains("/mystarbucks/mystore/") == true) {
-            view?.evaluateJavascript(ExtractStoreAllScript, null)
+            view?.evaluateJavascript(storeAllExtractionScript(), null)
         }
     }
 }
