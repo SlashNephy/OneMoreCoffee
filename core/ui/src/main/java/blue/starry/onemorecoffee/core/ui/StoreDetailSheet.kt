@@ -8,7 +8,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import blue.starry.onemorecoffee.core.domain.model.StoreVisitSummary
@@ -40,17 +43,21 @@ fun StoreDetailSheet(
         Text(
             text = store.name,
             style = MaterialTheme.typography.titleLargeEmphasized,
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = store.fullAddress,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        BusinessHoursText(rawJson = store.rawJson)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = store.visitStatusText(),
             style = MaterialTheme.typography.bodyMedium,
         )
-        BusinessHoursText(rawJson = store.rawJson)
         Button(
             onClick = {
                 context.openMapSearch(store)
@@ -74,7 +81,7 @@ private fun BusinessHoursText(rawJson: String) {
             val errorColor = MaterialTheme.colorScheme.error
             Text(
                 text = buildAnnotatedString {
-                    withStyle(SpanStyle(color = errorColor)) {
+                    withStyle(SpanStyle(color = errorColor, fontWeight = FontWeight.Bold)) {
                         append("営業時間外")
                     }
                     append("・${status.nextOpeningText}")
