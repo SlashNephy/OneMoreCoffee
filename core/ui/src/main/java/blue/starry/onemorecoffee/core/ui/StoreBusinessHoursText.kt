@@ -29,7 +29,7 @@ internal fun storeBusinessHoursText(
     val todayHours = weeklyHours[now.dayOfWeek]
 
     if (todayHours != null && todayHours.contains(now.toLocalTime())) {
-        return StoreBusinessHoursText.Open("本日の営業: ${todayHours.displayText}")
+        return StoreBusinessHoursText.Open(todayHours.displayText)
     }
 
     val nextOpening = (0..6).firstNotNullOfOrNull { dayOffset ->

@@ -18,7 +18,7 @@ class StoreBusinessHoursTextTest {
             now = tokyo("2026-05-18T12:00:00+09:00"),
         )
 
-        assertThat(status).isEqualTo(StoreBusinessHoursText.Open("本日の営業: 7:00 ~ 22:00"))
+        assertThat(status).isEqualTo(StoreBusinessHoursText.Open("7:00 ~ 22:00"))
     }
 
     @Test
@@ -63,7 +63,7 @@ class StoreBusinessHoursTextTest {
             now = tokyo("2026-05-18T08:00:00+09:00"),
         )
 
-        assertThat(status).isEqualTo(StoreBusinessHoursText.Open("本日の営業: 7:30 ~ 21:00"))
+        assertThat(status).isEqualTo(StoreBusinessHoursText.Open("7:30 ~ 21:00"))
     }
 
     @Test

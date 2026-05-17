@@ -72,8 +72,14 @@ fun StoreDetailSheet(
 private fun BusinessHoursText(rawJson: String) {
     when (val status = storeBusinessHoursText(rawJson)) {
         is StoreBusinessHoursText.Open -> {
+            val openColor = MaterialTheme.colorScheme.primary
             Text(
-                text = status.text,
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = openColor, fontWeight = FontWeight.Bold)) {
+                        append("現在営業中")
+                    }
+                    append("・${status.text}")
+                },
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
