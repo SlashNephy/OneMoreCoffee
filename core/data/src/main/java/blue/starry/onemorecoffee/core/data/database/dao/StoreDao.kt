@@ -33,7 +33,7 @@ interface StoreDao {
             stores.isReserve AS isReserve,
             COUNT(visits.id) AS visitCount,
             MAX(visits.visitedOn) AS lastVisitedOn,
-            stores.rawJson AS rawJson
+            COALESCE(stores.rawJson, '{}') AS rawJson
         FROM stores
         LEFT JOIN visits ON visits.storeId = stores.id
         GROUP BY
