@@ -59,7 +59,7 @@ fun StoreDetailSheet(
 
 private fun StoreVisitSummary.visitStatusText(): String {
     return if (isVisited) {
-        "訪問回数: $visitCount / 最終訪問: $lastVisitedOn"
+        lastVisitedOn?.let { "最終訪問: $it" } ?: "訪問済み"
     } else {
         "未訪問"
     }
