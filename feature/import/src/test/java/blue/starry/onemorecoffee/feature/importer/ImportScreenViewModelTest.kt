@@ -62,6 +62,7 @@ class ImportScreenViewModelTest {
 
     @Test
     fun importJson_emitsReturnToSettingsEventOnCompletedImport() = runTest {
+        repository.result = VisitImportResult(inserted = 2, duplicated = 1, unknownStoreVisits = 3, failed = 4)
         val viewModel = newViewModel()
         val event = async {
             viewModel.returnToSettingsEvents.first()
@@ -70,7 +71,7 @@ class ImportScreenViewModelTest {
         viewModel.importJson("[{}]")
         advanceUntilIdle()
 
-        assertThat(event.await()).isEqualTo(Unit)
+        assertThat(event.await()).isEqualTo(repository.result)
     }
 
     @Test

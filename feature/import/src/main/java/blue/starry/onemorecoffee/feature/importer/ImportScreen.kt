@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import blue.starry.onemorecoffee.core.domain.repository.VisitImportResult
 
 private const val StarbucksStoreUrl = "https://www.starbucks.co.jp/mystarbucks/mystore/"
 private const val BridgeName = "OneMoreCoffee"
@@ -43,14 +44,14 @@ private val ExtractStoreAllScript = """
 fun ImportScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onImportCompleted: () -> Unit = onBackClick,
+    onImportCompleted: (VisitImportResult) -> Unit = { onBackClick() },
     viewModel: ImportScreenViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel) {
-        viewModel.returnToSettingsEvents.collect {
-            onImportCompleted()
+        viewModel.returnToSettingsEvents.collect { result ->
+            onImportCompleted(result)
         }
     }
 
@@ -184,6 +185,14 @@ private fun blue.starry.onemorecoffee.core.domain.repository.VisitImportResult.t
         "$baseMessage / 失敗: $failed"
     } else {
         baseMessage
+    }
+}
+
+fun VisitImportResult.toImportCompletionMessage(): String {
+    return if (inserted > 0) {
+        "${inserted}件インポートしました。"
+    } else {
+        "新しい訪問履歴はありません。"
     }
 }
 
