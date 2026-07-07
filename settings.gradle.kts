@@ -24,9 +24,11 @@ include(
     ":core:domain",
     ":core:data",
     ":core:ui",
+    ":core:social",
     ":feature:map",
     ":feature:list",
     ":feature:stats",
     ":feature:settings",
     ":feature:import",
+    ":feature:friends",
 )

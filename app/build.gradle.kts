@@ -108,6 +108,8 @@ dependencies {
     implementation(projects.feature.stats)
     implementation(projects.feature.settings)
     implementation(projects.feature.import)
+    implementation(projects.core.social)
+    implementation(projects.feature.friends)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
