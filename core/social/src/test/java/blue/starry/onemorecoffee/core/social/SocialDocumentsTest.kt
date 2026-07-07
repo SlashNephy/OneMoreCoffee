@@ -78,6 +78,24 @@ class SocialDocumentsTest {
     }
 
     @Test
+    fun toActivityEvent_invalidVisitedOn_returnsNull() {
+        val event = SocialDocuments.toActivityEvent(
+            id = "u1_1783",
+            data = mapOf(
+                "uid" to "user1",
+                "type" to "VISIT",
+                "storeId" to "1783",
+                "storeName" to "丸の内オアゾ店",
+                "prefecture" to "東京都",
+                "visitedOn" to "not-a-date",
+                "createdAt" to createdAt,
+            ),
+        )
+
+        assertThat(event).isNull()
+    }
+
+    @Test
     fun visitDocument_roundTripsThroughToActivityEvent() {
         val document = SocialDocuments.visitDocument(
             uid = "user1",

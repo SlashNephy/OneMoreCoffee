@@ -90,7 +90,9 @@ object SocialDocuments {
                 storeId = data["storeId"] as? String ?: return null,
                 storeName = data["storeName"] as? String ?: return null,
                 prefecture = data["prefecture"] as? String ?: "",
-                visitedOn = (data["visitedOn"] as? String)?.let(LocalDate::parse) ?: return null,
+                visitedOn = (data["visitedOn"] as? String)
+                    ?.let { raw -> runCatching { LocalDate.parse(raw) }.getOrNull() }
+                    ?: return null,
             )
             TYPE_BACKFILL -> ActivityEvent.Backfill(
                 id = id,
