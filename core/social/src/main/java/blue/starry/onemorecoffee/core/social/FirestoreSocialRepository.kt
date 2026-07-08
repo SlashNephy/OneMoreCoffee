@@ -54,7 +54,10 @@ class FirestoreSocialRepository @Inject constructor(
         return observeInLeague(noLeague = null) { leagueId ->
             callbackFlow {
                 val registration = firestore().collection("leagues").document(leagueId)
-                    .addSnapshotListener { snapshot, _ ->
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Log.w(TAG, "Snapshot listener failed", error)
+                        }
                         trySend(snapshot?.takeIf(DocumentSnapshot::exists)?.let(::toLeague))
                     }
                 awaitClose { registration.remove() }
@@ -66,7 +69,10 @@ class FirestoreSocialRepository @Inject constructor(
         return observeInLeague(noLeague = emptyList<LeagueMember>()) { leagueId ->
             callbackFlow {
                 val registration = firestore().collection("leagues").document(leagueId).collection("members")
-                    .addSnapshotListener { snapshot, _ ->
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Log.w(TAG, "Snapshot listener failed", error)
+                        }
                         val members = snapshot?.documents.orEmpty().map { document ->
                             SocialDocuments.toLeagueMember(uid = document.id, data = document.estimatedData())
                         }
@@ -83,7 +89,10 @@ class FirestoreSocialRepository @Inject constructor(
                 val registration = firestore().collection("leagues").document(leagueId).collection("activities")
                     .orderBy("createdAt", Query.Direction.DESCENDING)
                     .limit(50)
-                    .addSnapshotListener { snapshot, _ ->
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Log.w(TAG, "Snapshot listener failed", error)
+                        }
                         val events = snapshot?.documents.orEmpty().mapNotNull { document ->
                             SocialDocuments.toActivityEvent(id = document.id, data = document.estimatedData())
                         }
