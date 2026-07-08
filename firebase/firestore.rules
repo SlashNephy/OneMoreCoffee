@@ -37,7 +37,11 @@ service cloud.firestore {
 
       match /activities/{activityId} {
         allow read: if isMember(leagueId);
-        allow create, update: if isMember(leagueId) && request.resource.data.uid == request.auth.uid;
+        allow create: if isMember(leagueId) && request.resource.data.uid == request.auth.uid;
+        // update は既存ドキュメントの所有者本人であることも要求する（他人のイベントの上書きを防ぐ）
+        allow update: if isMember(leagueId)
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid;
         allow delete: if isSignedIn() && (resource.data.uid == request.auth.uid || isCreator(leagueId));
       }
     }
