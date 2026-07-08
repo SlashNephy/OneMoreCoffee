@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,10 +83,10 @@ private fun NotJoinedContent(
     onJoin: (inviteCode: String, displayName: String, emoji: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var displayName by remember { mutableStateOf("") }
-    var emoji by remember { mutableStateOf("☕") }
-    var leagueName by remember { mutableStateOf("") }
-    var inviteCode by remember { mutableStateOf("") }
+    var displayName by rememberSaveable { mutableStateOf("") }
+    var emoji by rememberSaveable { mutableStateOf("☕") }
+    var leagueName by rememberSaveable { mutableStateOf("") }
+    var inviteCode by rememberSaveable { mutableStateOf("") }
 
     Column(
         modifier = modifier
@@ -146,7 +147,7 @@ private fun JoinedContent(
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showsLeaveDialog by remember { mutableStateOf(false) }
+    var showsLeaveDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showsLeaveDialog) {
         AlertDialog(
