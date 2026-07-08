@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isMember(leagueId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/leagues/$(leagueId)/members/$(request.auth.uid));
+    }
+    function isCreator(leagueId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/leagues/$(leagueId)).data.createdBy == request.auth.uid;
+    }
+
+    // 招待コード: get のみ許可し、list を拒否してコードの列挙を防ぐ
+    match /inviteCodes/{code} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /leagues/{leagueId} {
+      allow get: if isMember(leagueId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+
+      match /members/{uid} {
+        allow read: if isMember(leagueId);
+        // 参加 = 自分の uid の member doc を作ること（招待コードを知っている前提の soft security）
+        allow create, update: if isSignedIn() && request.auth.uid == uid;
+        // 作成者は端末紛失などで孤児化したメンバーを掃除できる
+        allow delete: if isSignedIn() && (request.auth.uid == uid || isCreator(leagueId));
+      }
+
+      match /activities/{activityId} {
+        allow read: if isMember(leagueId);
+        allow create, update: if isMember(leagueId) && request.resource.data.uid == request.auth.uid;
+        allow delete: if isSignedIn() && (resource.data.uid == request.auth.uid || isCreator(leagueId));
+      }
+    }
+  }
+}

@@ -30,3 +30,12 @@
 ```properties
 MAPS_API_KEY=your_api_key
 ```
+
+## ソーシャル機能のセットアップ（任意）
+
+フレンド機能（リーグ）を使う場合のみ必要。未設定でもアプリ本体は動作する。
+
+1. Firebase プロジェクトを作成し、Android アプリ（`blue.starry.onemorecoffee` と `blue.starry.onemorecoffee.debug`）を追加する
+2. Firestore（`asia-northeast1`）と Authentication の匿名サインインを有効化する
+3. `secrets.properties` に `FIREBASE_PROJECT_ID` / `FIREBASE_APPLICATION_ID` / `FIREBASE_API_KEY` を記入する
+4. セキュリティルールをデプロイする: `cd firebase && npx firebase-tools deploy --only firestore:rules`
