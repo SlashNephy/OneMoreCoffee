@@ -7,6 +7,7 @@ import blue.starry.onemorecoffee.core.domain.model.SocialProfile
 import blue.starry.onemorecoffee.core.domain.repository.SocialRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,7 +63,12 @@ class FriendsScreenViewModel @Inject constructor(
         // 参加済みなら画面表示時に自分の統計を最新化する（インポートを介さない訪問記録の反映漏れ対策）
         viewModelScope.launch {
             socialRepository.observeSession().filterNotNull().first()
-            runCatching { socialRepository.refreshOwnStats() }
+            try {
+                socialRepository.refreshOwnStats()
+            } catch (error: Throwable) {
+                if (error is CancellationException) throw error
+                // 統計の更新失敗は画面表示を妨げない
+            }
         }
     }
 
@@ -85,11 +91,15 @@ class FriendsScreenViewModel @Inject constructor(
     private fun mutate(block: suspend () -> Unit) {
         viewModelScope.launch {
             _isProcessing.value = true
-            runCatching { block() }
-                .onFailure { throwable ->
-                    _errorMessage.value = throwable.message ?: "処理に失敗しました"
-                }
-            _isProcessing.value = false
+            try {
+                block()
+            } catch (error: Throwable) {
+                // コルーチンのキャンセルは失敗ではないため再送出する（既存 ViewModel の規約に合わせる）
+                if (error is CancellationException) throw error
+                _errorMessage.value = error.message ?: "処理に失敗しました"
+            } finally {
+                _isProcessing.value = false
+            }
         }
     }
 
