@@ -1,6 +1,7 @@
 package blue.starry.onemorecoffee.core.social
 
 import android.content.Context
+import android.util.Log
 import blue.starry.onemorecoffee.core.domain.model.ActivityEvent
 import blue.starry.onemorecoffee.core.domain.model.FirstVisit
 import blue.starry.onemorecoffee.core.domain.model.League
@@ -22,6 +23,7 @@ import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -151,54 +153,64 @@ class FirestoreSocialRepository @Inject constructor(
             .get()
             .await()
 
-        firestore.batch().apply {
-            ownActivities.documents.forEach { document -> delete(document.reference) }
-            delete(leagueRef.collection("members").document(session.uid))
-        }.commit().await()
+        // Firestore の 1 バッチ上限（500 書き込み）を超えないよう分割して削除する
+        ownActivities.documents.chunked(MAX_BATCH_WRITES).forEach { chunk ->
+            firestore.batch().apply {
+                chunk.forEach { document -> delete(document.reference) }
+            }.commit().await()
+        }
 
+        leagueRef.collection("members").document(session.uid).delete().await()
         sessionStore.clear()
     }
 
     override suspend fun publishFirstVisits(firstVisits: List<FirstVisit>) {
-        val session = observeSession().first() ?: return
-        val summaries = storeRepository.observeStoreSummaries().first()
-        val summariesById = summaries.associateBy(StoreVisitSummary::id)
-        val stats = SocialStats.from(summaries)
-        val firestore = firestore()
-        val activities = firestore.collection("leagues").document(session.leagueId).collection("activities")
-        val members = firestore.collection("leagues").document(session.leagueId).collection("members")
+        try {
+            val session = observeSession().first() ?: return
+            val summaries = storeRepository.observeStoreSummaries().first()
+            val summariesById = summaries.associateBy(StoreVisitSummary::id)
+            val stats = SocialStats.from(summaries)
+            val firestore = firestore()
+            val activities = firestore.collection("leagues").document(session.leagueId).collection("activities")
+            val members = firestore.collection("leagues").document(session.leagueId).collection("members")
 
-        val batch = firestore.batch()
+            val batch = firestore.batch()
 
-        when (val plan = VisitPublicationPlan.of(firstVisits)) {
-            VisitPublicationPlan.None -> Unit
-            is VisitPublicationPlan.Individual -> {
-                plan.visits.forEach { visit ->
-                    val store = summariesById[visit.storeId] ?: return@forEach
+            when (val plan = VisitPublicationPlan.of(firstVisits)) {
+                VisitPublicationPlan.None -> Unit
+                is VisitPublicationPlan.Individual -> {
+                    plan.visits.forEach { visit ->
+                        val store = summariesById[visit.storeId] ?: return@forEach
 
+                        batch.set(
+                            activities.document(SocialDocuments.visitActivityId(uid = session.uid, storeId = visit.storeId)),
+                            SocialDocuments.visitDocument(
+                                uid = session.uid,
+                                storeId = visit.storeId,
+                                storeName = store.name,
+                                prefecture = store.prefecture,
+                                visitedOn = visit.visitedOn,
+                            ),
+                        )
+                    }
+                }
+                is VisitPublicationPlan.Backfill -> {
                     batch.set(
-                        activities.document(SocialDocuments.visitActivityId(uid = session.uid, storeId = visit.storeId)),
-                        SocialDocuments.visitDocument(
-                            uid = session.uid,
-                            storeId = visit.storeId,
-                            storeName = store.name,
-                            prefecture = store.prefecture,
-                            visitedOn = visit.visitedOn,
-                        ),
+                        activities.document(SocialDocuments.backfillActivityId(uid = session.uid, count = plan.count)),
+                        SocialDocuments.backfillDocument(uid = session.uid, count = plan.count),
                     )
                 }
             }
-            is VisitPublicationPlan.Backfill -> {
-                batch.set(
-                    activities.document(SocialDocuments.backfillActivityId(uid = session.uid, count = plan.count)),
-                    SocialDocuments.backfillDocument(uid = session.uid, count = plan.count),
-                )
-            }
-        }
 
-        batch.set(members.document(session.uid), SocialDocuments.statsUpdate(stats), SetOptions.merge())
-        // await しない: オフラインでもローカルキューに積まれ、再接続時に自動送信される
-        batch.commit()
+            batch.set(members.document(session.uid), SocialDocuments.statsUpdate(stats), SetOptions.merge())
+            // await しない: オフラインでもローカルキューに積まれ、再接続時に自動送信される
+            batch.commit()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Contract: a publish failure must not fail visit recording (see SocialRepository KDoc)
+            Log.w(TAG, "Failed to publish first visits to the league", e)
+        }
     }
 
     override suspend fun refreshOwnStats() {
@@ -270,4 +282,11 @@ class FirestoreSocialRepository @Inject constructor(
     }
 
     private fun isAvailable(): Boolean = FirebaseInitializer.isAvailable(context)
+
+    private companion object {
+        private const val TAG = "FirestoreSocialRepo"
+
+        // Firestore の 1 バッチ上限は 500 書き込み。余裕を持たせて分割する。
+        private const val MAX_BATCH_WRITES = 450
+    }
 }
