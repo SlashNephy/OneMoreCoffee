@@ -17,6 +17,9 @@ interface VisitDao {
     @Query("SELECT COUNT(*) FROM visits")
     suspend fun count(): Int
 
+    @Query("SELECT DISTINCT storeId FROM visits")
+    suspend fun visitedStoreIds(): List<String>
+
     @Query("DELETE FROM visits")
     suspend fun deleteAll()
 }
