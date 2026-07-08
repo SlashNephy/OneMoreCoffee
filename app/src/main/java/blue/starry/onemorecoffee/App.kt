@@ -21,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import blue.starry.onemorecoffee.feature.friends.FriendsScreen
 import blue.starry.onemorecoffee.feature.importer.ImportScreen
 import blue.starry.onemorecoffee.feature.importer.toImportCompletionMessage
 import blue.starry.onemorecoffee.feature.list.StoreListScreen
@@ -121,6 +122,7 @@ fun App() {
                     )
                     Route.List -> StoreListScreen(modifier = Modifier.fillMaxSize())
                     Route.Stats -> StatsScreen(modifier = Modifier.fillMaxSize())
+                    Route.Friends -> FriendsScreen(modifier = Modifier.fillMaxSize())
                     Route.Settings -> SettingsScreen(
                         modifier = Modifier.fillMaxSize(),
                         onImportClick = {

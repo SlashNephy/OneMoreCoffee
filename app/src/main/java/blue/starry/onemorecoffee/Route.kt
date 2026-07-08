@@ -7,10 +7,11 @@ enum class Route(
     Map("マップ", R.drawable.map_search),
     List("リスト", R.drawable.checklist),
     Stats("統計", R.drawable.summarize),
+    Friends("フレンド", R.drawable.group),
     Settings("設定", R.drawable.settings),
     ;
 
     companion object {
-        val bottomTabs = listOf(Map, List, Stats)
+        val bottomTabs = listOf(Map, List, Stats, Friends)
     }
 }
