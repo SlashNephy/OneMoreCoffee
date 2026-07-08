@@ -174,6 +174,9 @@ class FirestoreSocialRepository @Inject constructor(
     }
 
     override suspend fun publishFirstVisits(firstVisits: List<FirstVisit>) {
+        // 新規初訪問がなければ stats も不変のため、セッション読み取りを含む Firestore アクセス自体を省略する
+        if (firstVisits.isEmpty()) return
+
         try {
             val session = observeSession().first() ?: return
             val summaries = storeRepository.observeStoreSummaries().first()
