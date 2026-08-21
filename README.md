@@ -1,8 +1,8 @@
+# OneMoreCoffee
+
 <p align="center">
   <img src="docs/icon/ic_launcher_round.png" width="128" alt="OneMoreCoffee のアプリアイコン">
 </p>
-
-# OneMoreCoffee
 
 国内のスターバックス店舗の訪問状況を管理する、私的利用を目的とした Android アプリです。
 
