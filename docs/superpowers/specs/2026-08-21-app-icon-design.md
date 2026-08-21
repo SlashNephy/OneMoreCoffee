@@ -31,10 +31,12 @@
 - 割れ目: 太さ **4.0**、`round` キャップ。
   - 検討時の a3 案は 3.6 だったが、36px 表示で 1.2px 相当となり消失するため 4.0 に微増した。角度と豆の大きさは a3 のまま。
 - 豆とピン輪郭の間の白い余白は 5 以上を確保する（上記寸法では約 8.5）。5 を下回ると小サイズでアンチエイリアスにより境界が滲む。
+- 上記寸法のピンは Adaptive Icon の可視領域（中央 72dp）の 89% を占め、ホーム画面で Gmail や Maps 等の他のアイコンと並べると詰まって見えた。これを是正するため、図形全体を pivot (54, 54) で **0.8 倍に縮小**する。これによりピンの高さは可視領域の 71% となり、余白が確保される。
+  - 縮小によって割れ目の実効太さは 4.0 × 0.8 = 3.2 相当になる。小サイズ表示での視認性はこの点が最も懸念される。
 
 ### レイヤ構成
 
-前景 drawable は**白いパスのみ**で構成する。豆は緑で塗らず `fillType="evenOdd"` による**実際の透明な穴**とし、割れ目はその穴を跨ぐ白いストロークとして上に重ねる。
+前景 drawable は**白いパスのみ**で構成する。豆は緑で塗らず `fillType="evenOdd"` による**実際の透明な穴**とし、割れ目はその穴を跨ぐ白いストロークとして上に重ねる。全体を 0.8 倍に縮小するスケール用の `<group>` を最外側に置き、ピンと割れ目のグループをその内側に入れ子にする。
 
 この構成により、同一ファイルをそのまま `<monochrome>` に流用できる。テーマアイコンでは非透明ピクセルのみが前景色に置換されるため、豆を不透明色で塗ると豆が消えてしまう。
 
@@ -48,19 +50,25 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M54,22 C40.2,22 29,33.2 29,47 C29,64.5 54,86 54,86 C54,86 79,64.5 79,47 C79,33.2 67.8,22 54,22 Z M42.333,34.333 a11.5,16.5 -45 1,0 23.334,23.334 a11.5,16.5 -45 1,0 -23.334,-23.334 Z" />
     <group
         android:pivotX="54"
-        android:pivotY="46"
-        android:rotation="-45">
+        android:pivotY="54"
+        android:scaleX="0.8"
+        android:scaleY="0.8">
         <path
-            android:pathData="M54,30.5 C47.5,37 60.5,55 54,61.5"
-            android:strokeColor="#FFFFFF"
-            android:strokeLineCap="round"
-            android:strokeWidth="4" />
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M54,22 C40.2,22 29,33.2 29,47 C29,64.5 54,86 54,86 C54,86 79,64.5 79,47 C79,33.2 67.8,22 54,22 Z M42.333,34.333 a11.5,16.5 -45 1,0 23.334,23.334 a11.5,16.5 -45 1,0 -23.334,-23.334 Z" />
+        <group
+            android:pivotX="54"
+            android:pivotY="46"
+            android:rotation="-45">
+            <path
+                android:pathData="M54,30.5 C47.5,37 60.5,55 54,61.5"
+                android:strokeColor="#FFFFFF"
+                android:strokeLineCap="round"
+                android:strokeWidth="4" />
+        </group>
     </group>
 </vector>
 ```
