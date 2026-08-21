@@ -5,14 +5,16 @@
     android:viewportHeight="108">
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M41,45h26v16c0,8 -6,14 -13,14s-13,-6 -13,-14z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M67,48h5c5,0 8,3 8,8s-3,8 -8,8h-5v-6h5c2,0 2,-2 2,-2s0,-2 -2,-2h-5z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M39,78h31v5h-31z" />
-    <path
-        android:fillColor="#BCAAA4"
-        android:pathData="M46,31h5v10h-5zM53,27h5v14h-5zM61,31h5v10h-5z" />
+        android:fillType="evenOdd"
+        android:pathData="M54,22 C40.2,22 29,33.2 29,47 C29,64.5 54,86 54,86 C54,86 79,64.5 79,47 C79,33.2 67.8,22 54,22 Z M42.333,34.333 a11.5,16.5 -45 1,0 23.334,23.334 a11.5,16.5 -45 1,0 -23.334,-23.334 Z" />
+    <group
+        android:pivotX="54"
+        android:pivotY="46"
+        android:rotation="-45">
+        <path
+            android:pathData="M54,30.5 C47.5,37 60.5,55 54,61.5"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeWidth="4" />
+    </group>
 </vector>
