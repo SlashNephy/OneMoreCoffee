@@ -54,7 +54,8 @@ android {
         applicationId = "blue.starry.onemorecoffee"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        // CI からは -PversionCode=<github.run_number> で注入する
+        versionCode = (project.findProperty("versionCode") as? String)?.toIntOrNull() ?: 1
         versionName = "0.1.0"
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
