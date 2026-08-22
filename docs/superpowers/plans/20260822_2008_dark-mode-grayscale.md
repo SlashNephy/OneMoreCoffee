@@ -51,7 +51,7 @@
 
 このタスクにユニットテストは付けない。カラースキームの各スロットに定数を代入するだけの実装であり、それを検証するテストは定数をコピーして比較するだけのものになる。描画結果は Task 4 の実機検証で確認する。
 
-- [ ] **Step 1: カラースキームを書き換える**
+- [x] **Step 1: カラースキームを書き換える**
 
 `OneMoreCoffeeTheme.kt` の全体を次で置き換える。
 
@@ -123,7 +123,7 @@ fun OneMoreCoffeeTheme(
 }
 ```
 
-- [ ] **Step 2: コンパイルを確認する**
+- [x] **Step 2: コンパイルを確認する**
 
 Run: `./gradlew :core:ui:compileDebugKotlin`
 Expected: BUILD SUCCESSFUL
@@ -134,12 +134,12 @@ Expected: BUILD SUCCESSFUL
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
 ```
 
-- [ ] **Step 3: アプリ全体のコンパイルを確認する**
+- [x] **Step 3: アプリ全体のコンパイルを確認する**
 
 Run: `./gradlew :app:compileDebugKotlin`
 Expected: BUILD SUCCESSFUL（`MainActivity` の `OneMoreCoffeeTheme { App() }` は既定引数によりそのまま通る）
 
-- [ ] **Step 4: コミット**
+- [x] **Step 4: コミット**
 
 ```bash
 git add core/ui/src/main/java/blue/starry/onemorecoffee/core/ui/OneMoreCoffeeTheme.kt
@@ -170,7 +170,7 @@ EOF
 
 これを入れないと、ダークモードでの起動時に Compose が最初のフレームを描くまでの間だけ白いウィンドウが表示される。リソースの選択は Android のリソース解決に委ねられるためユニットテストの対象にしない。Task 4 の実機検証で、起動直後にフラッシュが出ないことを確認する。
 
-- [ ] **Step 1: ライト用の色リソースを作成する**
+- [x] **Step 1: ライト用の色リソースを作成する**
 
 `app/src/main/res/values/colors.xml`
 
@@ -180,7 +180,7 @@ EOF
 </resources>
 ```
 
-- [ ] **Step 2: ダーク用の色リソースを作成する**
+- [x] **Step 2: ダーク用の色リソースを作成する**
 
 `app/src/main/res/values-night/colors.xml`
 
@@ -190,7 +190,7 @@ EOF
 </resources>
 ```
 
-- [ ] **Step 3: ライトのテーマに windowBackground を追加する**
+- [x] **Step 3: ライトのテーマに windowBackground を追加する**
 
 `app/src/main/res/values/themes.xml` の全体を次で置き換える。
 
@@ -202,7 +202,7 @@ EOF
 </resources>
 ```
 
-- [ ] **Step 4: ダークのテーマを作成する**
+- [x] **Step 4: ダークのテーマを作成する**
 
 `app/src/main/res/values-night/themes.xml`
 
@@ -214,12 +214,12 @@ EOF
 </resources>
 ```
 
-- [ ] **Step 5: リソースがビルドを通ることを確認する**
+- [x] **Step 5: リソースがビルドを通ることを確認する**
 
 Run: `./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL
 
-- [ ] **Step 6: コミット**
+- [x] **Step 6: コミット**
 
 ```bash
 git add app/src/main/res/values/colors.xml app/src/main/res/values-night/colors.xml app/src/main/res/values/themes.xml app/src/main/res/values-night/themes.xml
@@ -258,7 +258,7 @@ EOF
 
 現状のコードは `store.isVisited -> Visited` / `store.isReserve -> Reserve` という排他的な `when` になっており、訪問済の Reserve 店舗が Reserve であることを失う。`markerStyleFor` の 4 通りのテストはこの欠陥に対する回帰テストである。
 
-- [ ] **Step 1: 失敗するテストを書く**
+- [x] **Step 1: 失敗するテストを書く**
 
 `feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapMarkerStyleTest.kt` を新規作成する。
 
@@ -287,12 +287,12 @@ class MapMarkerStyleTest {
 }
 ```
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
 Run: `./gradlew :feature:map:testDebugUnitTest --tests '*MapMarkerStyleTest'`
 Expected: コンパイルエラー。`Unresolved reference: markerStyleFor` および `Unresolved reference: MarkerFill`
 
-- [ ] **Step 3: 既存テストを新しい API に合わせて書き換える**
+- [x] **Step 3: 既存テストを新しい API に合わせて書き換える**
 
 `MapClusterLabelTest.kt` の `clusterFillColor_usesRedWhenUnvisitedStoresAreMajority` を次で置き換える。他のテストメソッドは変更しない。
 
@@ -304,7 +304,7 @@ Expected: コンパイルエラー。`Unresolved reference: markerStyleFor` お�
     }
 ```
 
-- [ ] **Step 4: 純関数を実装する**
+- [x] **Step 4: 純関数を実装する**
 
 `MapScreen.kt` の既存の `StoreMarkerStyle` enum 定義を削除する。
 
@@ -380,7 +380,7 @@ internal fun clusterStyleFor(
 }
 ```
 
-- [ ] **Step 5: 色定数を整理する**
+- [x] **Step 5: 色定数を整理する**
 
 `MapScreen.kt` 末尾の色定数を次で置き換える。
 
@@ -406,7 +406,7 @@ private const val ReserveBadgeFillColor = 0xFFC98A3B.toInt()
 private const val ReserveBadgeForegroundColor = 0xFF3B2708.toInt()
 ```
 
-- [ ] **Step 6: 星形の drawable を作成する**
+- [x] **Step 6: 星形の drawable を作成する**
 
 `feature/map/src/main/res/drawable/star_fill.xml`
 
@@ -424,7 +424,7 @@ private const val ReserveBadgeForegroundColor = 0xFF3B2708.toInt()
 </vector>
 ```
 
-- [ ] **Step 7: 店舗マーカーの描画を書き換える**
+- [x] **Step 7: 店舗マーカーの描画を書き換える**
 
 `createStoreMarkerBitmap` の全体を次で置き換える。
 
@@ -525,7 +525,7 @@ private fun drawReserveBadge(
 }
 ```
 
-- [ ] **Step 8: 店舗マーカーの呼び出し側を直す**
+- [x] **Step 8: 店舗マーカーの呼び出し側を直す**
 
 `storeIconFor` を次で置き換える。
 
@@ -541,7 +541,7 @@ private fun drawReserveBadge(
 
 `storeIconCache` の型宣言は `mutableMapOf<StoreMarkerStyle, BitmapDescriptor>()` のままでよい。`StoreMarkerStyle` が data class になったため、キーとしての等価性は引き続き成立する。
 
-- [ ] **Step 9: クラスタの描画を書き換える**
+- [x] **Step 9: クラスタの描画を書き換える**
 
 `createClusterMarkerBitmap` の全体を次で置き換える。
 
@@ -624,7 +624,7 @@ private fun createClusterMarkerBitmap(
 }
 ```
 
-- [ ] **Step 10: クラスタの呼び出し側を直す**
+- [x] **Step 10: クラスタの呼び出し側を直す**
 
 `ClusterIconKey` を次で置き換える。
 
@@ -656,11 +656,11 @@ private data class ClusterIconKey(
     }
 ```
 
-- [ ] **Step 11: 未使用インポートを整理する**
+- [x] **Step 11: 未使用インポートを整理する**
 
 `android.graphics.Color` のインポートは `Color.WHITE` を使わなくなったため不要になる。`MapScreen.kt` の import から `import android.graphics.Color` を削除する。
 
-- [ ] **Step 12: 地図タイルをシステム追従にする**
+- [x] **Step 12: 地図タイルをシステム追従にする**
 
 `MapScreen.kt` の import に次を追加する。
 
@@ -680,12 +680,12 @@ import com.google.maps.android.compose.ComposeMapColorScheme
         ) {
 ```
 
-- [ ] **Step 13: テストとビルドを確認する**
+- [x] **Step 13: テストとビルドを確認する**
 
 Run: `./gradlew :feature:map:testDebugUnitTest :app:assembleDebug`
 Expected: BUILD SUCCESSFUL。`MapMarkerStyleTest` の 2 件と `MapClusterLabelTest` の 4 件がすべて成功する
 
-- [ ] **Step 14: 設計書を更新する**
+- [x] **Step 14: 設計書を更新する**
 
 `docs/design.md` の 348-354 行目の表を次で置き換える。
 
@@ -705,7 +705,7 @@ Expected: BUILD SUCCESSFUL。`MapMarkerStyleTest` の 2 件と `MapClusterLabelT
 訪問状態は色相ではなく「塗りつぶしの有無」と「明暗」で表現する。これによりグレースケール表示や色覚多様性のもとでも情報が失われない。白リングは、地図タイルがダークモードで暗くなったときに濃い緑の塗りつぶしが背景へ沈むのを防ぐために全マーカーへ付ける。
 ```
 
-- [ ] **Step 15: コミット**
+- [x] **Step 15: コミット**
 
 ```bash
 git add feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt feature/map/src/main/res/drawable/star_fill.xml feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapMarkerStyleTest.kt feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapClusterLabelTest.kt docs/design.md
@@ -735,7 +735,7 @@ EOF
 
 グローバルの完了条件により、before / after を識別できる証跡が必要である。before はこのブランチを切る前の `main`（`945e456`）で撮影する。
 
-- [ ] **Step 1: before のスクリーンショットを取得する**
+- [x] **Step 1: before のスクリーンショットを取得する**
 
 ```bash
 git switch --detach 945e456
@@ -756,13 +756,13 @@ adb shell settings put secure accessibility_display_daltonizer_enabled 1
 adb shell settings put secure accessibility_display_daltonizer 0
 ```
 
-- [ ] **Step 2: ブランチへ戻る**
+- [x] **Step 2: ブランチへ戻る**
 
 ```bash
 git switch feat/dark-mode-grayscale
 ```
 
-- [ ] **Step 3: after のスクリーンショットを取得する**
+- [x] **Step 3: after のスクリーンショットを取得する**
 
 Run: `./gradlew :app:installDebug`
 
@@ -770,12 +770,12 @@ Step 1 と同じ画面・同じ条件で撮影する。マップは同じ座標�
 
 あわせて、ダークモードでアプリを一度終了してから起動し、白いフラッシュが出ないことを確認する。
 
-- [ ] **Step 4: 全体の検証コマンドを実行する**
+- [x] **Step 4: 全体の検証コマンドを実行する**
 
 Run: `./gradlew test lint`
 Expected: BUILD SUCCESSFUL。lint の指摘が出た場合は、設定変更やコメントでの抑制はせず、対応方針をユーザーに確認する
 
-- [ ] **Step 5: エミュレータの表示設定を戻す**
+- [x] **Step 5: エミュレータの表示設定を戻す**
 
 ```bash
 adb shell settings put secure accessibility_display_daltonizer_enabled 0
