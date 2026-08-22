@@ -49,7 +49,7 @@
 - Consumes: なし
 - Produces: `OneMoreCoffeeTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit)`。既存の呼び出し側（`MainActivity`）は引数なしのまま動作する。
 
-このタスクにユニットテストは付けない。カラースキームの各スロットに定数を代入するだけの実装であり、それを検証するテストは定数をコピーして比較するだけのものになる。描画結果は Task 5 の実機検証で確認する。
+このタスクにユニットテストは付けない。カラースキームの各スロットに定数を代入するだけの実装であり、それを検証するテストは定数をコピーして比較するだけのものになる。描画結果は Task 4 の実機検証で確認する。
 
 - [ ] **Step 1: カラースキームを書き換える**
 
@@ -168,7 +168,7 @@ EOF
 - Consumes: Task 1 で定めた `background` の値（ライト `#F8F7F4` / ダーク `#101410`）
 - Produces: `@color/window_background`
 
-これを入れないと、ダークモードでの起動時に Compose が最初のフレームを描くまでの間だけ白いウィンドウが表示される。リソースの選択は Android のリソース解決に委ねられるためユニットテストの対象にしない。Task 5 の実機検証で、起動直後にフラッシュが出ないことを確認する。
+これを入れないと、ダークモードでの起動時に Compose が最初のフレームを描くまでの間だけ白いウィンドウが表示される。リソースの選択は Android のリソース解決に委ねられるためユニットテストの対象にしない。Task 4 の実機検証で、起動直後にフラッシュが出ないことを確認する。
 
 - [ ] **Step 1: ライト用の色リソースを作成する**
 
@@ -235,12 +235,14 @@ EOF
 
 ---
 
-### Task 3: マーカースタイルの決定ロジック
+### Task 3: マーカーの視覚言語
 
 **Files:**
-- Modify: `feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt`（`StoreMarkerStyle` enum 定義部、および `clusterFillColor`）
+- Create: `feature/map/src/main/res/drawable/star_fill.xml`
 - Create: `feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapMarkerStyleTest.kt`
+- Modify: `feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt`
 - Modify: `feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapClusterLabelTest.kt`
+- Modify: `docs/design.md:346-354`
 
 **Interfaces:**
 - Consumes: なし
@@ -250,7 +252,9 @@ EOF
   - `internal fun markerStyleFor(isVisited: Boolean, isReserve: Boolean): StoreMarkerStyle`
   - `internal fun clusterStyleFor(totalCount: Int, visitedCount: Int): MarkerFill`
 
-このタスクでは描画に手を付けない。純関数とそのテストだけを先に確定させる。Task 4 の描画実装はここで決まった型を消費する。
+スタイル決定ロジックと描画を 1 つのタスクにまとめる。分割すると、スタイルを計算しているのに描画へ反映していない中間状態がコミットとして残るためである。テスト先行の順序（失敗するテスト → 純関数 → 描画）は保つ。
+
+ビットマップ生成そのものはユニットテストに向かないため、テストの対象は純関数に限る。描画結果は Task 4 の実機検証で確認する。
 
 現状のコードは `store.isVisited -> Visited` / `store.isReserve -> Reserve` という排他的な `when` になっており、訪問済の Reserve 店舗が Reserve であることを失う。`markerStyleFor` の 4 通りのテストはこの欠陥に対する回帰テストである。
 
@@ -376,49 +380,9 @@ internal fun clusterStyleFor(
 }
 ```
 
-この時点で `storeIconFor` / `clusterIconFor` がコンパイルエラーになるが、Task 4 で解消する。テストを先に通すため、`storeIconFor` の本体を暫定的に次へ書き換える。
+- [ ] **Step 5: 色定数を整理する**
 
-```kotlin
-    private fun storeIconFor(store: StoreVisitSummary): BitmapDescriptor {
-        val style = markerStyleFor(isVisited = store.isVisited, isReserve = store.isReserve)
-
-        return storeIconCache.getOrPut(style) {
-            BitmapDescriptorFactory.fromBitmap(createStoreMarkerBitmap(context, MarkerBrandColor))
-        }
-    }
-```
-
-`clusterIconFor` は次へ書き換える。
-
-```kotlin
-    private fun clusterIconFor(cluster: Cluster<StoreClusterItem>): BitmapDescriptor {
-        val visitedCount = cluster.items.count { it.store.isVisited }
-        val label = buildClusterLabel(
-            totalCount = cluster.size,
-            visitedCount = visitedCount,
-        )
-        val fill = clusterStyleFor(
-            totalCount = cluster.size,
-            visitedCount = visitedCount,
-        )
-        val cacheKey = ClusterIconKey(label = label, fill = fill)
-
-        return clusterIconCache.getOrPut(cacheKey) {
-            BitmapDescriptorFactory.fromBitmap(createClusterMarkerBitmap(context, label, MarkerBrandColor))
-        }
-    }
-```
-
-`ClusterIconKey` を次へ書き換える。
-
-```kotlin
-private data class ClusterIconKey(
-    val label: String,
-    val fill: MarkerFill,
-)
-```
-
-ファイル末尾の色定数を次へ置き換える。
+`MapScreen.kt` 末尾の色定数を次で置き換える。
 
 ```kotlin
 private const val ClusterReleaseZoom = 14f
@@ -433,51 +397,20 @@ private const val ClusterReleaseZoom = 14f
 
 /** 基調色。スターバックス公式グリーン `#00704A` は使用しない。 */
 private const val MarkerBrandColor = 0xFF006241.toInt()
+
+/** 明タイル・暗タイルのどちらでも輪郭が立つよう、全マーカーに付ける外周リング。 */
+private const val MarkerRingColor = 0xFFFFFFFF.toInt()
+private const val MarkerHollowFillColor = 0xFFFFFFFF.toInt()
+private const val MarkerOnBrandColor = 0xFFFFFFFF.toInt()
+private const val ReserveBadgeFillColor = 0xFFC98A3B.toInt()
+private const val ReserveBadgeForegroundColor = 0xFF3B2708.toInt()
 ```
 
-`storeIconCache` の型宣言は `mutableMapOf<StoreMarkerStyle, BitmapDescriptor>()` のままでよい。`StoreMarkerStyle` が data class になったため、キーとしての等価性は引き続き成立する。
-
-- [ ] **Step 5: テストが通ることを確認する**
-
-Run: `./gradlew :feature:map:testDebugUnitTest`
-Expected: PASS。`MapMarkerStyleTest` の 2 件と `MapClusterLabelTest` の 4 件がすべて成功する
-
-- [ ] **Step 6: コミット**
-
-```bash
-git add feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapMarkerStyleTest.kt feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapClusterLabelTest.kt
-git commit -m "$(cat <<'EOF'
-refactor(map): マーカースタイルの決定を純関数に切り出す
-
-訪問状態と Reserve を直交する 2 軸として扱うようにし、訪問済の
-Reserve 店舗が Reserve であることを失う不具合を解消する。
-クラスタも色ではなく塗り / 中空で表現するよう型を変更する。
-
-Co-Authored-By: Claude Fable 6 <noreply@anthropic.com>
-EOF
-)"
-```
-
----
-
-### Task 4: マーカーの描画と地図タイル
-
-**Files:**
-- Create: `feature/map/src/main/res/drawable/star_fill.xml`
-- Modify: `feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt`
-- Modify: `docs/design.md:346-354`
-
-**Interfaces:**
-- Consumes: Task 3 の `MarkerFill`, `StoreMarkerStyle`, `markerStyleFor`, `clusterStyleFor`, `MarkerBrandColor`
-- Produces: なし（描画の内部実装）
-
-ビットマップ生成そのものはユニットテストに向かないため、このタスクにテストは追加しない。Task 3 のテストが引き続き通ることを確認し、描画結果は Task 5 の実機検証で確認する。
-
-- [ ] **Step 1: 星形の drawable を作成する**
+- [ ] **Step 6: 星形の drawable を作成する**
 
 `feature/map/src/main/res/drawable/star_fill.xml`
 
-`local_cafe_fill.xml` と同じ 960 viewport に、中心 (480, 480)・外接半径 440・内接半径 210 の 5 芒星を配置する。Material Symbols の星ではなく手書きの単純な星形とするのは、バッジ内 10dp 相当で描かれるため、細部を持つ図案が潰れるからである。
+`local_cafe_fill.xml` と同じ 960 viewport に、中心 (480, 480)・外接半径 440・内接半径 210 の 5 芒星を配置する。Material Symbols の星ではなく手書きの単純な星形とするのは、バッジ内 9dp 相当で描かれるため、細部を持つ図案が潰れるからである。
 
 ```xml
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -491,20 +424,7 @@ EOF
 </vector>
 ```
 
-- [ ] **Step 2: 色定数を追加する**
-
-`MapScreen.kt` 末尾の `MarkerBrandColor` の直後に追加する。
-
-```kotlin
-/** 明タイル・暗タイルのどちらでも輪郭が立つよう、全マーカーに付ける外周リング。 */
-private const val MarkerRingColor = 0xFFFFFFFF.toInt()
-private const val MarkerHollowFillColor = 0xFFFFFFFF.toInt()
-private const val MarkerOnBrandColor = 0xFFFFFFFF.toInt()
-private const val ReserveBadgeFillColor = 0xFFC98A3B.toInt()
-private const val ReserveBadgeForegroundColor = 0xFF3B2708.toInt()
-```
-
-- [ ] **Step 3: 店舗マーカーの描画を書き換える**
+- [ ] **Step 7: 店舗マーカーの描画を書き換える**
 
 `createStoreMarkerBitmap` の全体を次で置き換える。
 
@@ -605,7 +525,7 @@ private fun drawReserveBadge(
 }
 ```
 
-- [ ] **Step 4: 店舗マーカーの呼び出し側を直す**
+- [ ] **Step 8: 店舗マーカーの呼び出し側を直す**
 
 `storeIconFor` を次で置き換える。
 
@@ -619,7 +539,9 @@ private fun drawReserveBadge(
     }
 ```
 
-- [ ] **Step 5: クラスタの描画を書き換える**
+`storeIconCache` の型宣言は `mutableMapOf<StoreMarkerStyle, BitmapDescriptor>()` のままでよい。`StoreMarkerStyle` が data class になったため、キーとしての等価性は引き続き成立する。
+
+- [ ] **Step 9: クラスタの描画を書き換える**
 
 `createClusterMarkerBitmap` の全体を次で置き換える。
 
@@ -702,19 +624,43 @@ private fun createClusterMarkerBitmap(
 }
 ```
 
-- [ ] **Step 6: クラスタの呼び出し側を直す**
+- [ ] **Step 10: クラスタの呼び出し側を直す**
 
-`clusterIconFor` の `BitmapDescriptorFactory.fromBitmap` の行を次へ変える。
+`ClusterIconKey` を次で置き換える。
 
 ```kotlin
-            BitmapDescriptorFactory.fromBitmap(createClusterMarkerBitmap(context, label, fill))
+private data class ClusterIconKey(
+    val label: String,
+    val fill: MarkerFill,
+)
 ```
 
-- [ ] **Step 7: 未使用インポートを整理する**
+`clusterIconFor` を次で置き換える。
+
+```kotlin
+    private fun clusterIconFor(cluster: Cluster<StoreClusterItem>): BitmapDescriptor {
+        val visitedCount = cluster.items.count { it.store.isVisited }
+        val label = buildClusterLabel(
+            totalCount = cluster.size,
+            visitedCount = visitedCount,
+        )
+        val fill = clusterStyleFor(
+            totalCount = cluster.size,
+            visitedCount = visitedCount,
+        )
+        val cacheKey = ClusterIconKey(label = label, fill = fill)
+
+        return clusterIconCache.getOrPut(cacheKey) {
+            BitmapDescriptorFactory.fromBitmap(createClusterMarkerBitmap(context, label, fill))
+        }
+    }
+```
+
+- [ ] **Step 11: 未使用インポートを整理する**
 
 `android.graphics.Color` のインポートは `Color.WHITE` を使わなくなったため不要になる。`MapScreen.kt` の import から `import android.graphics.Color` を削除する。
 
-- [ ] **Step 8: 地図タイルをシステム追従にする**
+- [ ] **Step 12: 地図タイルをシステム追従にする**
 
 `MapScreen.kt` の import に次を追加する。
 
@@ -734,12 +680,12 @@ import com.google.maps.android.compose.ComposeMapColorScheme
         ) {
 ```
 
-- [ ] **Step 9: ビルドとテストを確認する**
+- [ ] **Step 13: テストとビルドを確認する**
 
 Run: `./gradlew :feature:map:testDebugUnitTest :app:assembleDebug`
-Expected: BUILD SUCCESSFUL。Task 3 のテストが引き続きすべて通る
+Expected: BUILD SUCCESSFUL。`MapMarkerStyleTest` の 2 件と `MapClusterLabelTest` の 4 件がすべて成功する
 
-- [ ] **Step 10: 設計書を更新する**
+- [ ] **Step 14: 設計書を更新する**
 
 `docs/design.md` の 348-354 行目の表を次で置き換える。
 
@@ -759,16 +705,17 @@ Expected: BUILD SUCCESSFUL。Task 3 のテストが引き続きすべて通る
 訪問状態は色相ではなく「塗りつぶしの有無」と「明暗」で表現する。これによりグレースケール表示や色覚多様性のもとでも情報が失われない。白リングは、地図タイルがダークモードで暗くなったときに濃い緑の塗りつぶしが背景へ沈むのを防ぐために全マーカーへ付ける。
 ```
 
-- [ ] **Step 11: コミット**
+- [ ] **Step 15: コミット**
 
 ```bash
-git add feature/map/src/main/res/drawable/star_fill.xml feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt docs/design.md
+git add feature/map/src/main/java/blue/starry/onemorecoffee/feature/map/MapScreen.kt feature/map/src/main/res/drawable/star_fill.xml feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapMarkerStyleTest.kt feature/map/src/test/java/blue/starry/onemorecoffee/feature/map/MapClusterLabelTest.kt docs/design.md
 git commit -m "$(cat <<'EOF'
 feat(map): ピンとクラスタを塗り / 中空で表現しダークタイルに対応する
 
-色相への依存を取り除き、グレースケール表示でも訪問状態が判別できる
-ようにする。地図タイルは ComposeMapColorScheme.FOLLOW_SYSTEM に委ねる。
-Reserve は右上のスターバッジで示す。
+訪問状態と Reserve を直交する 2 軸として扱い、訪問済の Reserve 店舗が
+Reserve であることを失う不具合を解消する。色相への依存を取り除き、
+グレースケール表示でも訪問状態が判別できるようにする。
+地図タイルは ComposeMapColorScheme.FOLLOW_SYSTEM に委ねる。
 
 Co-Authored-By: Claude Fable 6 <noreply@anthropic.com>
 EOF
@@ -777,13 +724,13 @@ EOF
 
 ---
 
-### Task 5: 実機検証と PR
+### Task 4: 実機検証と PR
 
 **Files:**
 - 変更なし（検証と成果物の提出のみ）
 
 **Interfaces:**
-- Consumes: Task 1〜4 のすべて
+- Consumes: Task 1〜3 のすべて
 - Produces: PR
 
 グローバルの完了条件により、before / after を識別できる証跡が必要である。before はこのブランチを切る前の `main`（`945e456`）で撮影する。
@@ -791,21 +738,20 @@ EOF
 - [ ] **Step 1: before のスクリーンショットを取得する**
 
 ```bash
-git stash list && git switch --detach 945e456
+git switch --detach 945e456
 ```
 
-エミュレータを起動し、mobile-mcp で次を撮影する。
+エミュレータを起動し、`./gradlew :app:installDebug` でこの時点のアプリを入れる。mobile-mcp で次を撮影する。
 
 - マップ（訪問済・未訪問・Reserve・クラスタが同時に写る位置）
 - リスト
 - 統計
 - 設定
 
-ライトモードで撮影したあと、`adb shell cmd uimode night yes` でダークに切り替えて同じ 4 枚を撮影する。さらに開発者オプションの「色空間をシミュレート」→「全色盲」を有効にしてマップを撮影する。
-
-コマンドでのグレースケール切替は次で行える。
+ライトモードで撮影したあと、ダークに切り替えて同じ 4 枚を撮影する。さらにグレースケールを有効にしてマップを撮影する。
 
 ```bash
+adb shell cmd uimode night yes
 adb shell settings put secure accessibility_display_daltonizer_enabled 1
 adb shell settings put secure accessibility_display_daltonizer 0
 ```
@@ -829,7 +775,7 @@ Step 1 と同じ画面・同じ条件で撮影する。マップは同じ座標�
 Run: `./gradlew test lint`
 Expected: BUILD SUCCESSFUL。lint の指摘が出た場合は、設定変更やコメントでの抑制はせず、対応方針をユーザーに確認する
 
-- [ ] **Step 5: グレースケール設定を戻す**
+- [ ] **Step 5: エミュレータの表示設定を戻す**
 
 ```bash
 adb shell settings put secure accessibility_display_daltonizer_enabled 0
@@ -866,14 +812,14 @@ PR 本文には次を含める。
 | 3.1 カラースキームの切替 | Task 1 |
 | 3.2 パレット | Task 1 |
 | 3.3 起動時ウィンドウ背景 | Task 2 |
-| 3.4 地図タイル | Task 4 Step 8 |
-| 4.1 設計原則（白リング） | Task 4 Step 3, 5 |
-| 4.2 ピンのマトリクス | Task 3, Task 4 Step 3 |
-| 4.3 マーカーの色定数 | Task 4 Step 2 |
-| 4.4 クラスタ | Task 3, Task 4 Step 5 |
+| 3.4 地図タイル | Task 3 Step 12 |
+| 4.1 設計原則（白リング） | Task 3 Step 7, 9 |
+| 4.2 ピンのマトリクス | Task 3 Step 4, 7 |
+| 4.3 マーカーの色定数 | Task 3 Step 5 |
+| 4.4 クラスタ | Task 3 Step 4, 9, 10 |
 | 5 変更対象ファイル | File Structure に対応 |
-| 6 テスト方針 | Task 3 |
-| 7 検証計画 | Task 5 |
+| 6 テスト方針 | Task 3 Step 1〜4 |
+| 7 検証計画 | Task 4 |
 
 **2. Placeholder scan**
 
@@ -881,7 +827,7 @@ Task 1 Step 2 の「解決できない場合のみ」という分岐は、条件
 
 **3. Type consistency**
 
-- `MarkerFill` は Task 3 で定義し、Task 4 の `createStoreMarkerBitmap` / `createClusterMarkerBitmap` / `clusterIconFor` が消費する。
-- `StoreMarkerStyle` は Task 3 で data class に変わり、Task 4 の `storeIconFor` と `storeIconCache` のキーとして使われる。
-- `markerStyleFor` / `clusterStyleFor` のシグネチャは Task 3 の定義と Task 4 の呼び出しで一致している。
+- `MarkerFill` は Task 3 Step 4 で定義し、同 Step 7・9・10 が消費する。
+- `StoreMarkerStyle` は data class に変わり、`storeIconFor` と `storeIconCache` のキーとして使われる。
+- `markerStyleFor` / `clusterStyleFor` のシグネチャは定義と呼び出しで一致している。
 - 設計書が `ClusterStyle` と呼んでいた型を `MarkerFill` に統合した点は File Structure 節に明記した。
