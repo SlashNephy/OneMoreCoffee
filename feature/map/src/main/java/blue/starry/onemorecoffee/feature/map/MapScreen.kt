@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,6 +65,7 @@ import com.google.maps.android.clustering.algo.AbstractAlgorithm
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
 import com.google.maps.android.clustering.algo.StaticCluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
+import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapEffect
 import com.google.maps.android.compose.MapProperties
@@ -229,6 +229,8 @@ private fun StoreMap(
                 zoomControlsEnabled = false,
                 rotationGesturesEnabled = false,
             ),
+            // 地図タイルは OS の uiMode を直接見て切り替わるため、アプリ内にテーマ切替機能を導入する場合はここも連動させる必要がある
+            mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM,
         ) {
             val clusterManager = rememberClusterManager<StoreClusterItem>()
             var clusterRenderer by remember(clusterManager) { mutableStateOf<StoreClusterRenderer?>(null) }
@@ -318,15 +320,15 @@ internal fun shouldReleaseClusterAtZoom(zoom: Float): Boolean {
     return zoom >= ClusterReleaseZoom
 }
 
-internal fun clusterFillColor(
+internal fun clusterStyleFor(
     totalCount: Int,
     visitedCount: Int,
-): Int {
+): MarkerFill {
     val unvisitedCount = totalCount - visitedCount
     return if (unvisitedCount > totalCount / 2) {
-        ClusterUnvisitedMajorityColor
+        MarkerFill.Hollow
     } else {
-        ClusterDefaultColor
+        MarkerFill.Filled
     }
 }
 
@@ -431,14 +433,10 @@ private class StoreClusterRenderer(
     }
 
     private fun storeIconFor(store: StoreVisitSummary): BitmapDescriptor {
-        val style = when {
-            store.isVisited -> StoreMarkerStyle.Visited
-            store.isReserve -> StoreMarkerStyle.Reserve
-            else -> StoreMarkerStyle.Unvisited
-        }
+        val style = markerStyleFor(isVisited = store.isVisited, isReserve = store.isReserve)
 
         return storeIconCache.getOrPut(style) {
-            BitmapDescriptorFactory.fromBitmap(createStoreMarkerBitmap(context, style.color))
+            BitmapDescriptorFactory.fromBitmap(createStoreMarkerBitmap(context, style))
         }
     }
 
@@ -448,29 +446,47 @@ private class StoreClusterRenderer(
             totalCount = cluster.size,
             visitedCount = visitedCount,
         )
-        val fillColor = clusterFillColor(
+        val fill = clusterStyleFor(
             totalCount = cluster.size,
             visitedCount = visitedCount,
         )
-        val cacheKey = ClusterIconKey(label = label, fillColor = fillColor)
+        val cacheKey = ClusterIconKey(label = label, fill = fill)
 
         return clusterIconCache.getOrPut(cacheKey) {
-            BitmapDescriptorFactory.fromBitmap(createClusterMarkerBitmap(context, label, fillColor))
+            BitmapDescriptorFactory.fromBitmap(createClusterMarkerBitmap(context, label, fill))
         }
     }
 }
 
 private data class ClusterIconKey(
     val label: String,
-    val fillColor: Int,
+    val fill: MarkerFill,
 )
 
-private enum class StoreMarkerStyle(
-    val color: Int,
-) {
-    Visited(0xFF2E7D32.toInt()),
-    Reserve(0xFF6A1B9A.toInt()),
-    Unvisited(0xFFC62828.toInt()),
+/** マーカーの塗り方。訪問済は塗りつぶし、未訪問は中空で表す。 */
+internal enum class MarkerFill {
+    Filled,
+    Hollow,
+}
+
+/**
+ * 店舗マーカーの見た目。
+ *
+ * 訪問状態（塗り / 中空）と Reserve（バッジの有無）は直交する 2 軸として扱う。
+ */
+internal data class StoreMarkerStyle(
+    val fill: MarkerFill,
+    val hasReserveBadge: Boolean,
+)
+
+internal fun markerStyleFor(
+    isVisited: Boolean,
+    isReserve: Boolean,
+): StoreMarkerStyle {
+    return StoreMarkerStyle(
+        fill = if (isVisited) MarkerFill.Filled else MarkerFill.Hollow,
+        hasReserveBadge = isReserve,
+    )
 }
 
 private data class StoreClusterItem(
@@ -491,40 +507,113 @@ private data class StoreClusterItem(
 
 private fun createStoreMarkerBitmap(
     context: Context,
-    fillColor: Int,
+    style: StoreMarkerStyle,
 ): Bitmap {
     val density = context.resources.displayMetrics.density
     val size = (34 * density).toInt()
-    val iconSize = (20 * density).toInt()
+    val center = size / 2f
+    val ringWidth = 2f * density
+    val strokeWidth = 3f * density
     val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = fillColor
-    }
 
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+    // 白の下地。塗りの場合はそのまま外周リングになり、中空の場合は内側の地色になる
+    val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = MarkerRingColor
+    }
+    canvas.drawCircle(center, center, center, ringPaint)
+
+    val iconColor = when (style.fill) {
+        MarkerFill.Filled -> {
+            val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = MarkerBrandColor
+            }
+            canvas.drawCircle(center, center, center - ringWidth, fillPaint)
+            MarkerOnBrandColor
+        }
+
+        MarkerFill.Hollow -> {
+            val hollowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = MarkerHollowFillColor
+            }
+            canvas.drawCircle(center, center, center - ringWidth, hollowPaint)
+
+            val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = MarkerBrandColor
+                this.strokeWidth = strokeWidth
+                this.style = Paint.Style.STROKE
+            }
+            canvas.drawCircle(center, center, center - ringWidth - strokeWidth / 2f, strokePaint)
+            MarkerBrandColor
+        }
+    }
 
     val icon = requireNotNull(ResourcesCompat.getDrawable(context.resources, R.drawable.local_cafe_fill, context.theme)) {
         "local_cafe_fill drawable is missing"
     }.mutate()
-    icon.setTint(Color.WHITE)
+    icon.setTint(iconColor)
 
+    val iconSize = (18 * density).toInt()
     val iconLeft = (size - iconSize) / 2
     val iconTop = (size - iconSize) / 2
     icon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
     icon.draw(canvas)
 
+    if (style.hasReserveBadge) {
+        drawReserveBadge(context, canvas, size.toFloat(), density)
+    }
+
     return bitmap
+}
+
+/** Reserve 店舗であることを右上のバッジで示す。訪問状態とは独立した軸として重ねる。 */
+private fun drawReserveBadge(
+    context: Context,
+    canvas: Canvas,
+    size: Float,
+    density: Float,
+) {
+    val badgeRadius = 8f * density
+    val badgeBorder = 2f * density
+    val badgeCenterX = size - badgeRadius - density
+    val badgeCenterY = badgeRadius + density
+
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = MarkerRingColor
+    }
+    canvas.drawCircle(badgeCenterX, badgeCenterY, badgeRadius, borderPaint)
+
+    val badgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ReserveBadgeFillColor
+    }
+    canvas.drawCircle(badgeCenterX, badgeCenterY, badgeRadius - badgeBorder, badgePaint)
+
+    val star = requireNotNull(ResourcesCompat.getDrawable(context.resources, R.drawable.star_fill, context.theme)) {
+        "star_fill drawable is missing"
+    }.mutate()
+    star.setTint(ReserveBadgeForegroundColor)
+
+    val starSize = (9f * density).toInt()
+    val starLeft = (badgeCenterX - starSize / 2f).toInt()
+    val starTop = (badgeCenterY - starSize / 2f).toInt()
+    star.setBounds(starLeft, starTop, starLeft + starSize, starTop + starSize)
+    star.draw(canvas)
 }
 
 private fun createClusterMarkerBitmap(
     context: Context,
     label: String,
-    fillColor: Int,
+    fill: MarkerFill,
 ): Bitmap {
     val density = context.resources.displayMetrics.density
+    val ringWidth = 2f * density
+    val strokeWidth = 3f * density
+    val labelColor = when (fill) {
+        MarkerFill.Filled -> MarkerOnBrandColor
+        MarkerFill.Hollow -> MarkerBrandColor
+    }
     val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
+        color = labelColor
         textSize = 13 * density
         typeface = android.graphics.Typeface.DEFAULT_BOLD
     }
@@ -537,19 +626,47 @@ private fun createClusterMarkerBitmap(
     val width = maxOf(height, textBounds.width() + horizontalPadding * 2)
     val bitmap = createBitmap(width, height)
     val canvas = Canvas(bitmap)
-    val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = fillColor
+
+    val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = MarkerRingColor
+    }
+    canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), height / 2f, height / 2f, ringPaint)
+
+    when (fill) {
+        MarkerFill.Filled -> {
+            val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = MarkerBrandColor
+            }
+            canvas.drawRoundRect(
+                ringWidth,
+                ringWidth,
+                width - ringWidth,
+                height - ringWidth,
+                (height - ringWidth * 2f) / 2f,
+                (height - ringWidth * 2f) / 2f,
+                fillPaint,
+            )
+        }
+
+        MarkerFill.Hollow -> {
+            val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = MarkerBrandColor
+                this.strokeWidth = strokeWidth
+                style = Paint.Style.STROKE
+            }
+            val inset = ringWidth + strokeWidth / 2f
+            canvas.drawRoundRect(
+                inset,
+                inset,
+                width - inset,
+                height - inset,
+                (height - inset * 2f) / 2f,
+                (height - inset * 2f) / 2f,
+                strokePaint,
+            )
+        }
     }
 
-    canvas.drawRoundRect(
-        0f,
-        0f,
-        width.toFloat(),
-        height.toFloat(),
-        height / 2f,
-        height / 2f,
-        backgroundPaint,
-    )
     canvas.drawText(
         label,
         (width - textBounds.width()) / 2f - textBounds.left,
@@ -591,5 +708,13 @@ private suspend fun Context.currentLatLngOrNull(): LatLng? {
 }
 
 private const val ClusterReleaseZoom = 14f
-private const val ClusterDefaultColor = 0xFF00704A.toInt()
-private const val ClusterUnvisitedMajorityColor = 0xFFC62828.toInt()
+
+/** 基調色。スターバックス公式グリーン `#00704A` は使用しない。 */
+private const val MarkerBrandColor = 0xFF006241.toInt()
+
+/** 明タイル・暗タイルのどちらでも輪郭が立つよう、全マーカーに付ける外周リング。 */
+private const val MarkerRingColor = 0xFFFFFFFF.toInt()
+private const val MarkerHollowFillColor = 0xFFFFFFFF.toInt()
+private const val MarkerOnBrandColor = 0xFFFFFFFF.toInt()
+private const val ReserveBadgeFillColor = 0xFFC98A3B.toInt()
+private const val ReserveBadgeForegroundColor = 0xFF3B2708.toInt()

@@ -1,0 +1,4 @@
+<resources>
+    <!-- OneMoreCoffeeTheme.kt の LightColorScheme.background と値を合わせること -->
+    <color name="window_background">#FFF8F7F4</color>
+</resources>

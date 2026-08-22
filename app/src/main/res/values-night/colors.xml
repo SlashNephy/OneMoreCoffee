@@ -1,0 +1,4 @@
+<resources>
+    <!-- OneMoreCoffeeTheme.kt の DarkColorScheme.background と値を合わせること -->
+    <color name="window_background">#FF101410</color>
+</resources>

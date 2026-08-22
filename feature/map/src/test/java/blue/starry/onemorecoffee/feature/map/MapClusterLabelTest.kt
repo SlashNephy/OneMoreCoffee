@@ -26,10 +26,8 @@ class MapClusterLabelTest {
     }
 
     @Test
-    fun clusterFillColor_usesRedWhenUnvisitedStoresAreMajority() {
-        val defaultColor = clusterFillColor(totalCount = 4, visitedCount = 2)
-        val unvisitedMajorityColor = clusterFillColor(totalCount = 5, visitedCount = 2)
-
-        assertThat(unvisitedMajorityColor).isNotEqualTo(defaultColor)
+    fun clusterStyleFor_isHollowWhenUnvisitedStoresAreMajority() {
+        assertThat(clusterStyleFor(totalCount = 4, visitedCount = 2)).isEqualTo(MarkerFill.Filled)
+        assertThat(clusterStyleFor(totalCount = 5, visitedCount = 2)).isEqualTo(MarkerFill.Hollow)
     }
 }
