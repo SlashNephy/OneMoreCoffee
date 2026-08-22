@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions: { }
+
+jobs:
+  firebase-app-distribution:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    environment: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - run: echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      - run: echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > firebase-service-account.json
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+      - run: echo "$ANDROID_KEYSTORE" | base64 --decode > local.jks
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      - run: |
+          cat >> secrets.properties << EOF
+          MAPS_API_KEY=$MAPS_API_KEY
+          EOF
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+      - run: |
+          cat >> keystore.properties << EOF
+          android_keystore_path=$ANDROID_KEYSTORE_PATH
+          android_keystore_password=$ANDROID_KEYSTORE_PASSWORD
+          android_keystore_alias=$ANDROID_KEYSTORE_ALIAS
+          android_keystore_alias_password=$ANDROID_KEYSTORE_ALIAS_PASSWORD
+          EOF
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/local.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+          ANDROID_KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_ALIAS_PASSWORD }}
+      - run: git log -1 --pretty=short > release_notes.txt
+      - run: ./gradlew assembleRelease appDistributionUploadRelease --releaseNotesFile "$RELEASE_NOTES_FILE" -PversionCode="$VERSION_CODE"
+        env:
+          RELEASE_NOTES_FILE: ${{ github.workspace }}/release_notes.txt
+          VERSION_CODE: ${{ github.run_number }}

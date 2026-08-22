@@ -1,3 +1,4 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import java.util.Properties
 
 plugins {
@@ -6,6 +7,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.mapsplatform.secrets)
+    alias(libs.plugins.firebase.app.distribution)
+    alias(libs.plugins.google.services)
 }
 
 fun loadRootProperties(path: String): Properties {
@@ -54,7 +57,8 @@ android {
         applicationId = "blue.starry.onemorecoffee"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        // CI からは -PversionCode=<github.run_number> で注入する
+        versionCode = (project.findProperty("versionCode") as? String)?.toIntOrNull() ?: 1
         versionName = "0.1.0"
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
@@ -84,6 +88,12 @@ android {
             )
             if (rootProject.file("keystore.properties").exists()) {
                 signingConfig = signingConfigs.getByName("default")
+            }
+            firebaseAppDistribution {
+                // Play ストアでの配布を予定しないため APK で配信する
+                artifactType = "APK"
+                serviceCredentialsFile = "$rootDir/firebase-service-account.json"
+                groups = "tester"
             }
         }
         debug {

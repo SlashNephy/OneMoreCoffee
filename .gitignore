@@ -8,4 +8,7 @@ secrets.properties
 *.iml
 captures/
 keystore.properties
+google-services.json
+firebase-service-account.json
+release_notes.txt
 *.jks
