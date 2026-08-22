@@ -96,6 +96,12 @@
 - `drawable/` と `mipmap/` は別のリソース名前空間である。
 - `mipmap-anydpi-v26` 以外の mipmap ディレクトリが存在せず、`minSdk = 26` のため常に `anydpi-v26` が選択される。
 
+> **追記（2026-08-22）**: この 3 点目のうち「`mipmap-anydpi-v26` 以外の mipmap ディレクトリが存在せず」は現在は成り立たない。
+> Firebase App Distribution など APK からアイコンを取り出す外部のコンシューマは Adaptive Icon の XML を解釈しないため、
+> 密度別のレガシー mipmap（PNG）を追加した。`docs/superpowers/assets/icon/README.md` を参照。
+> ただし削除の根拠自体は変わらない。追加したのは `mipmap/ic_launcher` と `mipmap/ic_launcher_round` の密度別候補であり、
+> `@drawable/ic_launcher` を参照するものではなく、端末上は引き続き `anydpi-v26` が優先される。
+
 ## 検証
 
 1. `./gradlew :app:lintDebug` を通す。
