@@ -1,3 +1,4 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import java.util.Properties
 
 plugins {
@@ -6,6 +7,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.mapsplatform.secrets)
+    alias(libs.plugins.firebase.app.distribution)
+    alias(libs.plugins.google.services)
 }
 
 fun loadRootProperties(path: String): Properties {
@@ -85,6 +88,12 @@ android {
             )
             if (rootProject.file("keystore.properties").exists()) {
                 signingConfig = signingConfigs.getByName("default")
+            }
+            firebaseAppDistribution {
+                // Play ストアでの配布を予定しないため APK で配信する
+                artifactType = "APK"
+                serviceCredentialsFile = "$rootDir/firebase-service-account.json"
+                groups = "tester"
             }
         }
         debug {

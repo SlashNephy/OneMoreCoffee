@@ -17,6 +17,8 @@ android-maps-compose = "8.3.0"
 play-services-maps = "20.0.0"
 play-services-location = "21.4.0"
 mapsplatform-secrets = "2.0.1"
+firebase-app-distribution-gradle-plugin = "5.3.0"
+google-services = "4.5.0"
 junit = "4.13.2"
 robolectric = "4.16.1"
 truth = "1.4.5"
@@ -66,3 +68,5 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 mapsplatform-secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "mapsplatform-secrets" }
+firebase-app-distribution = { id = "com.google.firebase.appdistribution", version.ref = "firebase-app-distribution-gradle-plugin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
