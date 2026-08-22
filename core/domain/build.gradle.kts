@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "blue.starry.onemorecoffee.core.domain"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26
