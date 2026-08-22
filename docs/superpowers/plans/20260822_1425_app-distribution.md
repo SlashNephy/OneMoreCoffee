@@ -590,12 +590,29 @@ $ actionlint .github/workflows/deploy.yml .github/workflows/ci.yml
 (指摘なし, exit=0)
 ```
 
-### 未検証事項
+### CI 上での配信検証 (Task 5、2026-08-22 実施)
 
-- CI 上での実配信 (`workflow_run` / `workflow_dispatch` の発火、Secrets からのファイル生成、アップロード成功)
-- 配信された APK の実機動作 (特に `MAPS_API_KEY` の注入が効いて地図が表示されること)
+PR #51 を main へマージした後、以下を実測した。
 
-いずれも Secrets 登録と main へのマージ後でなければ検証できない。Task 5 で実施する。
+| # | トリガー | 結果 | 確認できたこと |
+| --- | --- | --- | --- |
+| 1 | `workflow_dispatch` | failure | `GRADLE_ENCRYPTION_KEY` の値が base64 でなく `Illegal base64 character 21` で失敗 |
+| 2 | `workflow_dispatch` | success | 手動実行の経路。`if` に `github.event_name == 'workflow_dispatch'` を足した効果 (参考実装のままならスキップされていた) |
+| 3 | `workflow_run` | success | main の CI 成功を受けた自動配信 |
+
+配信された APK (run #2, versionCode 2) の検証:
+
+```
+package: name='blue.starry.onemorecoffee' versionCode='2' versionName='0.1.0'
+V2 Signer: certificate SHA-256 digest: 94b3ae0f... (ローカルビルドと一致)
+com.google.android.geo.API_KEY: 実キーが埋め込み済み (DEFAULT_API_KEY ではない)
+```
+
+署名の SHA-256 がローカルビルドと一致したことで、`ANDROID_KEYSTORE` の base64 復元と `keystore.properties` の生成が正しく動いていることが確認できた。
+
+run #3 (`workflow_run` 由来、versionCode 3) はテスターの実機に配信され、**インストールと地図の描画を確認済み**。`MAPS_API_KEY` の注入が実機上でも機能している。
+
+これで計画時の未検証事項はすべて解消した。
 
 ### Task 5 再開時の注意
 

@@ -112,7 +112,7 @@ Gradle を実行する 4 ジョブ (`assemble` / `test` / `android-lint` / `code
 
 ## 検証方針
 
-CI 上でしか通せない経路があるため、段階を分ける。
+CI 上でしか通せない経路があるため、段階を分ける。**以下はすべて 2026-08-22 に実施済み。**
 
 1. **ローカル**: `./gradlew assembleRelease -PversionCode=999` を実行し、署名済み APK が生成されること、`aapt2 dump badging` で versionCode が 999 になっていることを確認する。App Distribution へのアップロードは認証情報が無いため行わない。
 2. **ローカル**: 配信タスクが configuration cache と両立するかを確認する。非対応なら該当タスクの実行方法を調整する。
