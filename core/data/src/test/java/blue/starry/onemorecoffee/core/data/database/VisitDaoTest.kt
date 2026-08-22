@@ -70,6 +70,19 @@ class VisitDaoTest {
         assertThat(database.visitDao().count()).isEqualTo(2)
     }
 
+    @Test
+    fun visitedStoreIds_returnsDistinctStoreIds() = runTest {
+        database.visitDao().insertIgnore(
+            listOf(
+                visit(storeId = "store-1", visitedOn = LocalDate.of(2026, 7, 1)),
+                visit(storeId = "store-1", visitedOn = LocalDate.of(2026, 7, 2)),
+                visit(storeId = "store-2", visitedOn = LocalDate.of(2026, 7, 1)),
+            ),
+        )
+
+        assertThat(database.visitDao().visitedStoreIds()).containsExactly("store-1", "store-2")
+    }
+
     private fun visit(
         storeId: String,
         visitedOn: LocalDate,

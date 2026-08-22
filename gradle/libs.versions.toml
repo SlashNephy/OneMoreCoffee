@@ -4,6 +4,7 @@ kotlin = "2.4.10"
 ksp = "2.3.11"
 androidx-activity = "1.13.0"
 androidx-compose-bom = "2026.04.00"
+androidx-datastore = "1.1.7"
 androidx-lifecycle = "2.10.0"
 androidx-navigation3 = "1.1.6"
 androidx-room = "2.8.4"
@@ -17,6 +18,7 @@ android-maps-compose = "8.3.0"
 play-services-maps = "20.0.0"
 play-services-location = "21.4.0"
 mapsplatform-secrets = "2.0.1"
+firebase-bom = "34.0.0"
 junit = "4.13.2"
 robolectric = "4.16.1"
 truth = "1.4.5"
@@ -48,11 +50,16 @@ ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 android-maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "android-maps-compose" }
 android-maps-compose-utils = { module = "com.google.maps.android:maps-compose-utils", version.ref = "android-maps-compose" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx-datastore" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }

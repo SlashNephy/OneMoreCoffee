@@ -42,6 +42,15 @@ val mapsApiKey = loadRootProperties("secrets.properties").nonBlankProperty("MAPS
     ?: loadRootProperties("secrets.defaults.properties").nonBlankProperty("MAPS_API_KEY")
     ?: "DEFAULT_API_KEY"
 
+fun secretProperty(name: String, defaultValue: String): String =
+    loadRootProperties("secrets.properties").nonBlankProperty(name)
+        ?: loadRootProperties("secrets.defaults.properties").nonBlankProperty(name)
+        ?: defaultValue
+
+val firebaseProjectId = secretProperty("FIREBASE_PROJECT_ID", "DEFAULT_FIREBASE_PROJECT_ID")
+val firebaseApplicationId = secretProperty("FIREBASE_APPLICATION_ID", "DEFAULT_FIREBASE_APPLICATION_ID")
+val firebaseApiKey = secretProperty("FIREBASE_API_KEY", "DEFAULT_FIREBASE_API_KEY")
+
 android {
     namespace = "blue.starry.onemorecoffee"
     compileSdk = 36
@@ -59,6 +68,9 @@ android {
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", mapsApiKey.asBuildConfigStringLiteral())
+        buildConfigField("String", "FIREBASE_PROJECT_ID", firebaseProjectId.asBuildConfigStringLiteral())
+        buildConfigField("String", "FIREBASE_APPLICATION_ID", firebaseApplicationId.asBuildConfigStringLiteral())
+        buildConfigField("String", "FIREBASE_API_KEY", firebaseApiKey.asBuildConfigStringLiteral())
     }
 
     signingConfigs {
@@ -97,6 +109,9 @@ secrets {
     propertiesFileName = "secrets.properties"
     defaultPropertiesFileName = rootProject.relativePath("secrets.defaults.properties")
     ignoreList.add("MAPS_API_KEY")
+    ignoreList.add("FIREBASE_PROJECT_ID")
+    ignoreList.add("FIREBASE_APPLICATION_ID")
+    ignoreList.add("FIREBASE_API_KEY")
 }
 
 dependencies {
@@ -108,6 +123,8 @@ dependencies {
     implementation(projects.feature.stats)
     implementation(projects.feature.settings)
     implementation(projects.feature.import)
+    implementation(projects.core.social)
+    implementation(projects.feature.friends)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
