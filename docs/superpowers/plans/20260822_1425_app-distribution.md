@@ -533,3 +533,66 @@ Firebase コンソールの App Distribution で、`versionCode` が実行時の
 - **`appId` が空文字のまま配信タスクを実行すると失敗する。** ローカルで誤って `appDistributionUploadRelease` を叩かないよう注意する (認証情報も無いためどのみち失敗する)。
 - **`secrets.properties` は `>>` で追記している。** チェックアウト直後は存在しないため実質新規作成だが、参考実装に合わせている。
 - **`GRADLE_ENCRYPTION_KEY` 未設定でもワークフローは動く。** configuration cache が保存されず毎回コールドになるだけ。
+
+---
+
+## 実行記録 (2026-08-22)
+
+計画策定後に方針変更があったため、実装は以下の点で計画と異なる。設計ドキュメントは変更後の内容に更新済み。
+
+### 方針変更: appId の注入方式 (A) → google-services.json による自動解決 (B)
+
+当初は `appId` を `-PfirebaseAppId` で注入し `google-services.json` を持ち込まない構成だったが、ユーザー判断により参考実装 (mitsubachi) と同じ形に変更した。
+
+変更に伴う差分:
+
+- `gradle/libs.versions.toml` と `build.gradle.kts` に `google-services` プラグイン (4.5.0) を追加
+- `app/build.gradle.kts` の `firebaseAppDistribution` ブロックから `appId` 行を削除
+- `.github/workflows/ci.yml` の Gradle 実行 4 ジョブに `GOOGLE_SERVICES_JSON` の注入ステップを追加
+- `deploy.yml` から `-PfirebaseAppId` を削除し、`GOOGLE_SERVICES_JSON` の注入ステップを追加
+- Secret `FIREBASE_APP_ID` は不要になり、代わりに `GOOGLE_SERVICES_JSON` が必要 (リポジトリ Secret)
+- `.gitignore` に `google-services.json` と `release_notes.txt` を追加
+
+### 計画時の不確実性の解消
+
+| 項目 | 結果 |
+| --- | --- |
+| `firebaseAppDistribution {}` を buildType 内に書けるか | 書ける。`firebaseAppDistributionDefault` への退避は不要 |
+| App Distribution プラグインの configuration cache 対応 | 対応済み。`--no-configuration-cache` は不要 |
+| `google-services.json` 不在時の挙動 | `processDebugGoogleServices` が "File google-services.json is missing." で失敗する。ci.yml への注入は必須 |
+
+### 検証証跡
+
+```
+# versionCode の注入 (debug)
+before: package: name='blue.starry.onemorecoffee.debug' versionCode='1'   versionName='0.1.0'
+after : package: name='blue.starry.onemorecoffee.debug' versionCode='999' versionName='0.1.0'
+
+# 配信タスクの生成
+$ ./gradlew :app:tasks --all | grep -i appDistribution
+appDistributionAddTesters
+appDistributionRemoveTesters
+appDistributionUploadDebug
+appDistributionUploadRelease
+
+# release ビルド (google-services.json による appId 自動解決、-PfirebaseAppId なし)
+$ ./gradlew :app:assembleRelease -PversionCode=999
+BUILD SUCCESSFUL in 39s
+package: name='blue.starry.onemorecoffee' versionCode='999' versionName='0.1.0'
+V2 Signer: certificate DN: C=JP, ST=Tokyo, L=Shinagawa, CN=SlashNephy
+
+# 配信タスク (認証情報が無いためここが local の限界。appId の解決自体は成功している)
+$ ./gradlew :app:appDistributionUploadRelease -PversionCode=999
+> Service credentials file does not exist. Please check the service credentials path and try again
+
+# ワークフローの静的検証
+$ actionlint .github/workflows/deploy.yml .github/workflows/ci.yml
+(指摘なし, exit=0)
+```
+
+### 未検証事項
+
+- CI 上での実配信 (`workflow_run` / `workflow_dispatch` の発火、Secrets からのファイル生成、アップロード成功)
+- 配信された APK の実機動作 (特に `MAPS_API_KEY` の注入が効いて地図が表示されること)
+
+いずれも Secrets 登録と main へのマージ後でなければ検証できない。Task 5 で実施する。
