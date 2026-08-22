@@ -596,3 +596,18 @@ $ actionlint .github/workflows/deploy.yml .github/workflows/ci.yml
 - 配信された APK の実機動作 (特に `MAPS_API_KEY` の注入が効いて地図が表示されること)
 
 いずれも Secrets 登録と main へのマージ後でなければ検証できない。Task 5 で実施する。
+
+### Task 5 再開時の注意
+
+- Secret の確認は 2 スコープに分かれる。`GOOGLE_SERVICES_JSON` はリポジトリ Secret、それ以外は Environment `release`。計画本文の `gh secret list --env release` だけでは足りない。
+
+```bash
+gh secret list
+gh secret list --env release
+```
+
+- Secret を登録しても既存の CI 実行は自動で再実行されない。PR #51 の赤いチェックは手動での再実行が必要。
+
+```bash
+gh run rerun 32555118670 --failed
+```
