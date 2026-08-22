@@ -229,6 +229,7 @@ private fun StoreMap(
                 zoomControlsEnabled = false,
                 rotationGesturesEnabled = false,
             ),
+            // 地図タイルは OS の uiMode を直接見て切り替わるため、アプリ内にテーマ切替機能を導入する場合はここも連動させる必要がある
             mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM,
         ) {
             val clusterManager = rememberClusterManager<StoreClusterItem>()

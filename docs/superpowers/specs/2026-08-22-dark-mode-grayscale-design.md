@@ -73,8 +73,22 @@ Dynamic Color（Material You）は採用しない。壁紙から配色を生成�
 | `surfaceVariant` | `#DCE5DB` | `#3F4A42` |
 | `onSurfaceVariant` | `#414942` | `#BFC9BE` |
 | `outline` | `#717972` | `#89938B` |
+| `outlineVariant` | `#C1C9BF` | `#3F4A42` |
 | `error` | `#BA1A1A` | `#FFB4AB` |
 | `onError` | `#FFFFFF` | `#690005` |
+| `errorContainer` | `#FFDAD6` | `#93000A` |
+| `onErrorContainer` | `#410002` | `#FFDAD6` |
+| `tertiaryContainer` | `#D2E4FF` | `#17497B` |
+| `onTertiaryContainer` | `#001C38` | `#D2E4FF` |
+| `surfaceContainerLowest` | `#FFFFFF` | `#0B0F0B` |
+| `surfaceContainerLow` | `#F5F4EF` | `#181C18` |
+| `surfaceContainerHigh` | `#E9E8E3` | `#262B25` |
+| `surfaceContainerHighest` | `#E3E2DD` | `#313630` |
+| `surfaceDim` | `#DDDCD7` | `#101410` |
+| `surfaceBright` | `#F8F7F4` | `#363A35` |
+| `inverseSurface` | `#2F312D` | `#E1E3DD` |
+| `inverseOnSurface` | `#F0F1EB` | `#2F312D` |
+| `inversePrimary` | `#6ADBA8` | `#006241` |
 
 ダーク側の `primary` に `#006241` をそのまま使わないのは、暗いサーフェス上でコントラスト比が不足するためである。同一色相のまま明度を上げたトーンに置き換える。
 
@@ -155,13 +169,13 @@ val style = when {
 | Reserve バッジの前景 | `#3B2708` |
 | Reserve バッジの枠 | `#FFFFFF` |
 
-寸法は現行の 34dp 円を踏襲する。外周リングは 2dp、未訪問の枠は 3dp、バッジは直径 18dp・枠 2dp とする。
+寸法は現行の 34dp 円を踏襲する。外周リングは 2dp、未訪問の枠は 3dp、バッジは直径 16dp・枠 2dp とする。
 
 Reserve バッジ用に Material Symbols の star（fill）を `feature/map/src/main/res/drawable/star_fill.xml` として追加する。
 
 ### 4.4 クラスタ
 
-現状は「未訪問が過半なら赤 `#C62828`、そうでなければ緑 `#00704A`」という色分けである。この色分けは**維持する**。地図一面のクラスタを眺めたとき、色は読解を挟まずに拾える前注意的な手がかりであり、`12+ (5)` と `20+` を読み分けるのとは認知コストが異なるためである。
+現状は「未訪問が過半なら赤 `#C62828`、そうでなければ緑 `#00704A`」という色分けである。色による前注意的な区別という**機能は維持し**、その担い手を色相から輝度と塗りへ移す。地図一面のクラスタを眺めたとき、色は読解を挟まずに拾える前注意的な手がかりであり、`12+ (5)` と `20+` を読み分けるのとは認知コストが異なるためである。
 
 ただし色相ではなく、ピンと同じ「中空 / 塗り」の語彙に載せ替える。輝度と閉じた領域の有無もまた前注意的に処理される視覚特徴であり、かつグレースケール変換後も残る。
 
@@ -170,7 +184,7 @@ Reserve バッジ用に Material Symbols の star（fill）を `feature/map/src/
 | 未訪問が過半 | 白塗り＋緑の太枠＋緑のラベル（中空） |
 | それ以外 | 緑塗り＋白のラベル＋白リング |
 
-あわせて `ClusterDefaultColor` の `#00704A` を `#006241` に置き換える。`#00704A` はスターバックスの公式グリーンであり、[app-icon-design](2026-08-21-app-icon-design.md) で不使用と定めた方針との未整合が残っていた箇所である。視覚的な差はほとんどなく、これは視認性の改善ではなく方針の整合を取るための変更である。
+あわせて `ClusterDefaultColor` と `ClusterUnvisitedMajorityColor` の 2 定数は削除し、ピンと共通の `MarkerBrandColor`（`#006241`）に集約する。`ClusterDefaultColor` の `#00704A` はスターバックスの公式グリーンであり、[app-icon-design](2026-08-21-app-icon-design.md) で不使用と定めた方針との未整合が残っていた箇所である。視覚的な差はほとんどなく、これは視認性の改善ではなく方針の整合を取るための変更である。
 
 `buildClusterLabel` の出力（`12+ (5)` 形式）は変更しない。
 
@@ -195,12 +209,12 @@ Reserve バッジ用に Material Symbols の star（fill）を `feature/map/src/
 ```kotlin
 internal fun markerStyleFor(isVisited: Boolean, isReserve: Boolean): StoreMarkerStyle
 
-internal fun clusterStyleFor(totalCount: Int, visitedCount: Int): ClusterStyle
+internal fun clusterStyleFor(totalCount: Int, visitedCount: Int): MarkerFill
 ```
 
 `markerStyleFor` は 4 通りの入力すべてを table test で押さえる。これは 4.2 に記した「訪問済の Reserve が Reserve でなくなる」という実在の欠陥に対する回帰テストであり、定数を書き写すだけのテストではない。
 
-`clusterStyleFor` は `clusterFillColor` の改名にあたる。返り値が `Int` から enum に変わるだけで、既存のテスト済みの挙動はそのまま存続する。
+`clusterStyleFor` は `clusterFillColor` の改名にあたる。返り値は `Int` から、ピンの塗り分けと共通の `MarkerFill` enum に変わる。ピンとクラスタで別々の型を持たせず、同じ enum に統合したことで「中空 / 塗り」という語彙が両者で一致していることが型としても保証される。既存のテスト済みの挙動はそのまま存続する。
 
 描画結果そのものは 7 の実機検証で確認する。
 
