@@ -371,17 +371,14 @@ private class ZoomLevelClusterAlgorithm(
         return delegate.getClusters(zoom)
     }
 
-    override fun getItems(): Collection<StoreClusterItem> {
-        return delegate.items
-    }
+    override val items: Collection<StoreClusterItem>
+        get() = delegate.items
 
-    override fun setMaxDistanceBetweenClusteredItems(maxDistance: Int) {
-        delegate.maxDistanceBetweenClusteredItems = maxDistance
-    }
-
-    override fun getMaxDistanceBetweenClusteredItems(): Int {
-        return delegate.maxDistanceBetweenClusteredItems
-    }
+    override var maxDistanceBetweenClusteredItems: Int
+        get() = delegate.maxDistanceBetweenClusteredItems
+        set(value) {
+            delegate.maxDistanceBetweenClusteredItems = value
+        }
 }
 
 private class StoreClusterRenderer(
@@ -479,21 +476,17 @@ private enum class StoreMarkerStyle(
 private data class StoreClusterItem(
     val store: StoreVisitSummary,
 ) : ClusterItem {
-    override fun getPosition(): LatLng {
-        return LatLng(store.latitude, store.longitude)
-    }
+    override val position: LatLng
+        get() = LatLng(store.latitude, store.longitude)
 
-    override fun getTitle(): String {
-        return store.name
-    }
+    override val title: String
+        get() = store.name
 
-    override fun getSnippet(): String {
-        return if (store.isVisited) "Visited" else "Unvisited"
-    }
+    override val snippet: String
+        get() = if (store.isVisited) "Visited" else "Unvisited"
 
-    override fun getZIndex(): Float {
-        return 0f
-    }
+    override val zIndex: Float
+        get() = 0f
 }
 
 private fun createStoreMarkerBitmap(

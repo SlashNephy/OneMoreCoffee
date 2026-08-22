@@ -47,7 +47,7 @@ val mapsApiKey = loadRootProperties("secrets.properties").nonBlankProperty("MAPS
 
 android {
     namespace = "blue.starry.onemorecoffee"
-    compileSdk = 36
+    compileSdk = 37
 
     buildFeatures {
         buildConfig = true
