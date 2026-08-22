@@ -782,7 +782,7 @@ adb shell settings put secure accessibility_display_daltonizer_enabled 0
 adb shell cmd uimode night no
 ```
 
-- [ ] **Step 6: PR を作成する**
+- [x] **Step 6: PR を作成する**
 
 ```bash
 git push -u origin feat/dark-mode-grayscale
